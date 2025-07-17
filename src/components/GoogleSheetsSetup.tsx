@@ -92,11 +92,12 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
                 <li>Enable Google Sheets API in Google Cloud Console</li>
                 <li>Create an API key and restrict it to Sheets API</li>
                 <li>Share your spreadsheet with "Anyone with the link"</li>
-                <li>Expected format: Date | Description | Person | Category | Combined/Personal | Amount | ... | Angela Amount | Johno Amount | ... | Payment Method</li>
-                <li>Person column should contain "Johno" for Johno's expenses and "Angela" for Angela's expenses</li>
-                <li>Combined/Personal column should contain "Combined" or "Personal"</li>
-                <li>Payment Method column should contain "Cash" or "Credit Card"</li>
-                <li>For combined expenses, the system will use Johno's 55% / Angela's 45% split</li>
+                <li>Expected format: Date | Description | Person | Category | Combined/Personal | Amount | Payment Method | (skip) | Johno Amount | Angela Amount</li>
+                <li><strong>Person column:</strong> "Johno" or "Angela"</li>
+                <li><strong>Combined/Personal column:</strong> "Combined" or "Personal"</li>
+                <li><strong>Payment Method column:</strong> "Cash" or "Credit Card"</li>
+                <li><strong>Amount columns:</strong> Johno Amount (column I), Angela Amount (column J)</li>
+                <li>For combined expenses, individual amounts will be used to calculate split percentages</li>
               </ol>
             </div>
           </div>
