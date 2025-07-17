@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Transaction, Budget, Account, FinancialSummary, SavingsGoal } from '../types';
-import { format, startOfMonth, endOfMonth, isWithinInterval, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval, subMonths, isBefore } from 'date-fns';
 import { DateRange } from '../components/DateRangeFilter';
 
 export const useFinancialData = (
@@ -20,6 +20,56 @@ export const useFinancialData = (
       return isWithinInterval(transactionDate, { start: filterStart, end: filterEnd });
     });
   }, [transactions, filterStart, filterEnd]);
+
+  // Calculate historical averages for the last 6 months (independent of date range filter)
+  const historicalAverages = useMemo(() => {
+    const categories = [
+      'Groceries', 'Electricity', 'Hair/Nails/Beauty', 'Pet Expenses', 'Eating Out', 
+      'Clothing', 'Golf', 'Dischem/Clicks', 'Petrol', 'Gifts', 'Travel', 'Wine', 
+      'Kids', 'House', 'Subscriptions', 'Ad Hoc'
+    ];
+    
+    const averages: Record<string, number> = {};
+    const now = new Date();
+    
+    categories.forEach(category => {
+      const monthlyTotals: number[] = [];
+      
+      // Calculate spending for each of the last 6 months
+      for (let i = 1; i <= 6; i++) {
+        const monthDate = subMonths(now, i);
+        const monthStart = startOfMonth(monthDate);
+        const monthEnd = endOfMonth(monthDate);
+        
+        const monthlySpending = transactions
+          .filter(t => {
+            const transactionDate = new Date(t.date);
+            return t.category === category && 
+                   t.type === 'expense' &&
+                   isWithinInterval(transactionDate, { start: monthStart, end: monthEnd });
+          })
+          .reduce((sum, t) => {
+            // Calculate the actual amount based on assignment and split
+            if (t.assignedTo === 'shared' && t.splitPercentage) {
+              return sum + (t.amount * (t.splitPercentage / 100));
+            } else if (t.assignedTo === 'shared') {
+              return sum + (t.amount * 0.55); // Default 55% for Johno
+            }
+            return sum + t.amount;
+          }, 0);
+        
+        monthlyTotals.push(monthlySpending);
+      }
+      
+      // Calculate average (only include months with data)
+      const validMonths = monthlyTotals.filter(total => total > 0);
+      averages[category] = validMonths.length > 0 
+        ? monthlyTotals.reduce((sum, total) => sum + total, 0) / monthlyTotals.length
+        : 0;
+    });
+    
+    return averages;
+  }, [transactions]);
 
   const summary: FinancialSummary = useMemo(() => {
     const totalIncome = filteredTransactions
@@ -81,7 +131,7 @@ export const useFinancialData = (
         allocated: budgetAllocations[index],
         spent,
         color: colors[index % colors.length],
-        historicalAverage: 0,
+        historicalAverage: historicalAverages[category] || 0,
         trend: 'stable' as const,
         recommendedAdjustment: 0,
         confidence: 0.8,

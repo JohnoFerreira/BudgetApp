@@ -16,14 +16,19 @@ export const useSmartBudgeting = (
 
   // Calculate historical averages for the last 6 months
   const historicalData = useMemo(() => {
-    const categories = ['Food', 'Transportation', 'Entertainment', 'Utilities', 'Shopping', 'Healthcare'];
+    const categories = [
+      'Groceries', 'Electricity', 'Hair/Nails/Beauty', 'Pet Expenses', 'Eating Out', 
+      'Clothing', 'Golf', 'Dischem/Clicks', 'Petrol', 'Gifts', 'Travel', 'Wine', 
+      'Kids', 'House', 'Subscriptions', 'Ad Hoc'
+    ];
     const monthlyData: Record<string, number[]> = {};
+    const now = new Date();
 
     categories.forEach(category => {
       monthlyData[category] = [];
       
       for (let i = 1; i <= 6; i++) {
-        const monthDate = subMonths(currentMonth, i);
+        const monthDate = subMonths(now, i);
         const monthStart = startOfMonth(monthDate);
         const monthEnd = endOfMonth(monthDate);
         
@@ -33,14 +38,22 @@ export const useSmartBudgeting = (
             t.type === 'expense' &&
             isWithinInterval(new Date(t.date), { start: monthStart, end: monthEnd })
           )
-          .reduce((sum, t) => sum + t.amount, 0);
+          .reduce((sum, t) => {
+            // Calculate the actual amount based on assignment and split
+            if (t.assignedTo === 'shared' && t.splitPercentage) {
+              return sum + (t.amount * (t.splitPercentage / 100));
+            } else if (t.assignedTo === 'shared') {
+              return sum + (t.amount * 0.55); // Default 55% for Johno
+            }
+            return sum + t.amount;
+          }, 0);
         
         monthlyData[category].push(monthlySpending);
       }
     });
 
     return monthlyData;
-  }, [transactions, currentMonth]);
+  }, [transactions]);
 
   // Calculate smart budget recommendations
   const smartBudgets = useMemo(() => {
