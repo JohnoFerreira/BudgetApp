@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, CreditCard, Calendar, RefreshCw, User, Users, PieChart } from 'lucide-react';
 import { FinancialSummary, Budget, Account, BudgetSetup } from '../types';
 import { BudgetChart } from './BudgetChart';
@@ -36,6 +37,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   dateRange = getDefaultDateRange(),
   onDateRangeChange
 }) => {
+  const [showAllBudgets, setShowAllBudgets] = useState(false);
+  
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
       style: 'currency',
@@ -440,8 +443,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {budgetSetup ? 'Shared Categories' : 'Category Budgets'}
             </h2>
           </div>
-          <div className="space-y-4">
-            {(budgetSetup ? sharedBudgets : budgets).map((budget) => {
+          <div className="space-y-4 mb-4">
+            {(budgetSetup ? sharedBudgets : budgets)
+              .slice(0, showAllBudgets ? undefined : 5)
+              .map((budget) => {
               const percentage = (budget.spent / budget.allocated) * 100;
               const isOverBudget = budget.spent > budget.allocated;
               
@@ -475,6 +480,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
               );
             })}
           </div>
+          
+          {/* Show More/Less Button */}
+          {(budgetSetup ? sharedBudgets : budgets).length > 5 && (
+            <div className="text-center">
+              <button
+                onClick={() => setShowAllBudgets(!showAllBudgets)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+              >
+                {showAllBudgets ? (
+                  <>
+                    <TrendingUp className="h-4 w-4 mr-2 rotate-180" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <TrendingDown className="h-4 w-4 mr-2" />
+                    Show More ({(budgetSetup ? sharedBudgets : budgets).length - 5} more)
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
