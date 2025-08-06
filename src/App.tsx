@@ -4,6 +4,7 @@ import { BudgetAnalysis } from './components/BudgetAnalysis';
 import { SmartRecommendations } from './components/SmartRecommendations';
 import { GoogleSheetsSetup } from './components/GoogleSheetsSetup';
 import { BudgetSetupComponent } from './components/BudgetSetup';
+import { SavingsGoalsSetup } from './components/SavingsGoalsSetup';
 import { IndividualOverview } from './components/IndividualOverview';
 import { useGoogleSheets } from './hooks/useGoogleSheets';
 import { useFinancialData } from './hooks/useFinancialData';
@@ -21,7 +22,11 @@ function App() {
   const [budgetSetup, setBudgetSetup] = useState<BudgetSetupType | null>(null);
   const [useSampleData, setUseSampleData] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances'>('dashboard');
-  const [savingsGoals] = useState<SavingsGoal[]>(generateSampleSavingsGoals());
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances' | 'goals'>('dashboard');
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>(() => {
+    const saved = localStorage.getItem('savingsGoals');
+    return saved ? JSON.parse(saved) : generateSampleSavingsGoals();
+  });
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
   
   // Load config and budget setup from localStorage
@@ -79,6 +84,11 @@ function App() {
       setBudgetSetup(updatedSetup);
       localStorage.setItem('budgetSetup', JSON.stringify(updatedSetup));
     }
+  };
+
+  const handleSavingsGoalsSave = (goals: SavingsGoal[]) => {
+    setSavingsGoals(goals);
+    localStorage.setItem('savingsGoals', JSON.stringify(goals));
   };
 
   const handleUseSampleData = () => {
@@ -239,6 +249,16 @@ function App() {
                 Bank Balances
               </button>
               <button
+                onClick={() => setActiveTab('goals')}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                  activeTab === 'goals'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Savings Goals
+              </button>
+              <button
                 onClick={() => setActiveTab('setup')}
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
                   activeTab === 'setup'
@@ -341,6 +361,15 @@ function App() {
             onSave={handleBudgetSetupSave}
             onBack={() => setActiveTab('dashboard')}
             initialSetup={budgetSetup || undefined}
+          />
+        )}
+
+        {activeTab === 'goals' && (
+          <SavingsGoalsSetup
+            savingsGoals={savingsGoals}
+            onSave={handleSavingsGoalsSave}
+            onBack={() => setActiveTab('dashboard')}
+            budgetSetup={budgetSetup}
           />
         )}
       </div>
