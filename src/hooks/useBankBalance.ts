@@ -61,9 +61,28 @@ export const useBankBalance = (
       };
     }
 
-    // Use date range if provided, otherwise use current month
-    const filterStart = dateRange ? new Date(dateRange.startDate) : startOfMonth(new Date());
-    const filterEnd = dateRange ? new Date(dateRange.endDate) : endOfMonth(new Date());
+    // Use date range if provided, otherwise use current pay cycle
+    const getPayCycleStart = (date: Date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      
+      if (day >= 25) {
+        return new Date(year, month, 25);
+      } else {
+        return new Date(year, month - 1, 25);
+      }
+    };
+
+    const getPayCycleEnd = (startDate: Date) => {
+      const year = startDate.getFullYear();
+      const month = startDate.getMonth();
+      return new Date(year, month + 1, 24);
+    };
+
+    const currentDate = new Date();
+    const filterStart = dateRange ? new Date(dateRange.startDate) : getPayCycleStart(currentDate);
+    const filterEnd = dateRange ? new Date(dateRange.endDate) : getPayCycleEnd(getPayCycleStart(currentDate));
 
     // Filter transactions for the selected period
     const filteredTransactions = transactions.filter(transaction => {

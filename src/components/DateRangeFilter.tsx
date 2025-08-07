@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Filter, X } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, addDays, subDays } from 'date-fns';
 
 export interface DateRange {
   startDate: string;
@@ -23,26 +23,62 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
 
+  // Helper function to get pay cycle dates (25th to 24th)
+  const getPayCycleStart = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    
+    if (day >= 25) {
+      // If we're on or after the 25th, this pay cycle started on the 25th of this month
+      return new Date(year, month, 25);
+    } else {
+      // If we're before the 25th, this pay cycle started on the 25th of last month
+      return new Date(year, month - 1, 25);
+    }
+  };
+
+  const getPayCycleEnd = (startDate: Date) => {
+    const year = startDate.getFullYear();
+    const month = startDate.getMonth();
+    // End date is 24th of next month
+    return new Date(year, month + 1, 24);
+  };
+
+  const getCurrentPayCycle = () => {
+    const today = new Date();
+    const start = getPayCycleStart(today);
+    const end = getPayCycleEnd(start);
+    return { start, end };
+  };
+
+  const getPreviousPayCycle = (monthsBack: number) => {
+    const today = new Date();
+    const currentStart = getPayCycleStart(today);
+    const targetStart = new Date(currentStart.getFullYear(), currentStart.getMonth() - monthsBack, 25);
+    const targetEnd = getPayCycleEnd(targetStart);
+    return { start: targetStart, end: targetEnd };
+  };
   const presetRanges: DateRange[] = [
     {
-      startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-      endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
-      label: 'This Month'
+      startDate: format(getCurrentPayCycle().start, 'yyyy-MM-dd'),
+      endDate: format(getCurrentPayCycle().end, 'yyyy-MM-dd'),
+      label: 'Current Pay Cycle'
     },
     {
-      startDate: format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'),
-      endDate: format(endOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd'),
-      label: 'Last Month'
+      startDate: format(getPreviousPayCycle(1).start, 'yyyy-MM-dd'),
+      endDate: format(getPreviousPayCycle(1).end, 'yyyy-MM-dd'),
+      label: 'Previous Pay Cycle'
     },
     {
-      startDate: format(subMonths(startOfMonth(new Date()), 2), 'yyyy-MM-dd'),
-      endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
-      label: 'Last 3 Months'
+      startDate: format(getPreviousPayCycle(2).start, 'yyyy-MM-dd'),
+      endDate: format(getCurrentPayCycle().end, 'yyyy-MM-dd'),
+      label: 'Last 3 Pay Cycles'
     },
     {
-      startDate: format(subMonths(startOfMonth(new Date()), 5), 'yyyy-MM-dd'),
-      endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
-      label: 'Last 6 Months'
+      startDate: format(getPreviousPayCycle(5).start, 'yyyy-MM-dd'),
+      endDate: format(getCurrentPayCycle().end, 'yyyy-MM-dd'),
+      label: 'Last 6 Pay Cycles'
     },
     {
       startDate: format(startOfYear(new Date()), 'yyyy-MM-dd'),
@@ -149,7 +185,29 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
 // Default date range (current month)
 export const getDefaultDateRange = (): DateRange => ({
-  startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
-  endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
-  label: 'This Month'
+  startDate: format((() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+    
+    if (day >= 25) {
+      return new Date(year, month, 25);
+    } else {
+      return new Date(year, month - 1, 25);
+    }
+  })(), 'yyyy-MM-dd'),
+  endDate: format((() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+    
+    if (day >= 25) {
+      return new Date(year, month + 1, 24);
+    } else {
+      return new Date(year, month, 24);
+    }
+  })(), 'yyyy-MM-dd'),
+  label: 'Current Pay Cycle'
 });

@@ -8,11 +8,29 @@ export const useFinancialData = (
   savingsGoals: SavingsGoal[] = [],
   dateRange?: DateRange
 ) => {
-  const currentMonth = new Date();
+  const currentDate = new Date();
   
-  // Use date range if provided, otherwise default to current month
-  const filterStart = dateRange ? new Date(dateRange.startDate) : startOfMonth(currentMonth);
-  const filterEnd = dateRange ? new Date(dateRange.endDate) : endOfMonth(currentMonth);
+  // Use date range if provided, otherwise default to current pay cycle
+  const getPayCycleStart = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    
+    if (day >= 25) {
+      return new Date(year, month, 25);
+    } else {
+      return new Date(year, month - 1, 25);
+    }
+  };
+
+  const getPayCycleEnd = (startDate: Date) => {
+    const year = startDate.getFullYear();
+    const month = startDate.getMonth();
+    return new Date(year, month + 1, 24);
+  };
+
+  const filterStart = dateRange ? new Date(dateRange.startDate) : getPayCycleStart(currentDate);
+  const filterEnd = dateRange ? new Date(dateRange.endDate) : getPayCycleEnd(getPayCycleStart(currentDate));
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(transaction => {
@@ -160,34 +178,35 @@ export const useFinancialData = (
   }, [transactions]);
 
   const monthlyTrends = useMemo(() => {
-    const last6Months = Array.from({ length: 6 }, (_, i) => {
-      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - i, 1);
-      const monthStart = startOfMonth(date);
-      const monthEnd = endOfMonth(date);
+    const last6PayCycles = Array.from({ length: 6 }, (_, i) => {
+      // Calculate pay cycle dates going back i cycles
+      const currentStart = getPayCycleStart(currentDate);
+      const cycleStart = new Date(currentStart.getFullYear(), currentStart.getMonth() - i, 25);
+      const cycleEnd = new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, 24);
       
-      const monthTransactions = transactions.filter(t => {
+      const cycleTransactions = transactions.filter(t => {
         const transactionDate = new Date(t.date);
-        return isWithinInterval(transactionDate, { start: monthStart, end: monthEnd });
+        return isWithinInterval(transactionDate, { start: cycleStart, end: cycleEnd });
       });
 
-      const income = monthTransactions
+      const income = cycleTransactions
         .filter(t => t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
 
-      const expenses = monthTransactions
+      const expenses = cycleTransactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
 
       return {
-        month: format(date, 'MMM yyyy'),
+        month: format(cycleStart, 'MMM dd') + ' - ' + format(cycleEnd, 'MMM dd'),
         income,
         expenses,
         net: income - expenses
       };
     }).reverse();
 
-    return last6Months;
-  }, [transactions, currentMonth]);
+    return last6PayCycles;
+  }, [transactions, currentDate]);
 
   return {
     filteredTransactions,

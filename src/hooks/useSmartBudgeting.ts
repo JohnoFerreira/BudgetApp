@@ -8,13 +8,31 @@ export const useSmartBudgeting = (
   savingsGoals: SavingsGoal[],
   dateRange?: DateRange
 ) => {
-  const currentMonth = new Date();
+  const currentDate = new Date();
   
-  // Use date range if provided, otherwise default to current month
-  const filterStart = dateRange ? new Date(dateRange.startDate) : startOfMonth(currentMonth);
-  const filterEnd = dateRange ? new Date(dateRange.endDate) : endOfMonth(currentMonth);
+  // Use date range if provided, otherwise default to current pay cycle
+  const getPayCycleStart = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    
+    if (day >= 25) {
+      return new Date(year, month, 25);
+    } else {
+      return new Date(year, month - 1, 25);
+    }
+  };
 
-  // Calculate historical averages for the last 6 months
+  const getPayCycleEnd = (startDate: Date) => {
+    const year = startDate.getFullYear();
+    const month = startDate.getMonth();
+    return new Date(year, month + 1, 24);
+  };
+
+  const filterStart = dateRange ? new Date(dateRange.startDate) : getPayCycleStart(currentDate);
+  const filterEnd = dateRange ? new Date(dateRange.endDate) : getPayCycleEnd(getPayCycleStart(currentDate));
+
+  // Calculate historical averages for the last 6 pay cycles
   const historicalData = useMemo(() => {
     const categories = [
       'Groceries', 'Electricity', 'Hair/Nails/Beauty', 'Pet Expenses', 'Eating Out', 
@@ -22,21 +40,22 @@ export const useSmartBudgeting = (
       'Kids', 'House', 'Subscriptions', 'Ad Hoc'
     ];
     const monthlyData: Record<string, number[]> = {};
-    const now = new Date();
+    const now = currentDate;
 
     categories.forEach(category => {
       monthlyData[category] = [];
       
-      for (let i = 1; i <= 6; i++) {
-        const monthDate = subMonths(now, i);
-        const monthStart = startOfMonth(monthDate);
-        const monthEnd = endOfMonth(monthDate);
+      for (let i = 0; i < 6; i++) {
+        // Calculate pay cycle dates going back i cycles
+        const currentStart = getPayCycleStart(now);
+        const cycleStart = new Date(currentStart.getFullYear(), currentStart.getMonth() - i, 25);
+        const cycleEnd = new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, 24);
         
-        const monthlySpending = transactions
+        const cycleSpending = transactions
           .filter(t => 
             t.category === category && 
             t.type === 'expense' &&
-            isWithinInterval(new Date(t.date), { start: monthStart, end: monthEnd })
+            isWithinInterval(new Date(t.date), { start: cycleStart, end: cycleEnd })
           )
           .reduce((sum, t) => {
             // Calculate the actual amount based on assignment and split
@@ -48,7 +67,7 @@ export const useSmartBudgeting = (
             return sum + t.amount;
           }, 0);
         
-        monthlyData[category].push(monthlySpending);
+        monthlyData[category].push(cycleSpending);
       }
     });
 
@@ -103,7 +122,7 @@ export const useSmartBudgeting = (
       // Calculate total monthly savings goal requirement
       const totalMonthlySavingsNeeded = savingsGoals.reduce((sum, goal) => {
         const monthsRemaining = Math.max(1, 
-          Math.ceil((new Date(goal.targetDate).getTime() - currentMonth.getTime()) / (1000 * 60 * 60 * 24 * 30))
+          Math.ceil((new Date(goal.targetDate).getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24 * 30))
         );
         const remainingAmount = Math.max(0, goal.targetAmount - goal.currentAmount);
         return sum + (remainingAmount / monthsRemaining);
