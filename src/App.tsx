@@ -37,7 +37,8 @@ function App() {
       setConfig(JSON.parse(savedConfig));
     }
     if (savedBudgetSetup) {
-      setBudgetSetup(JSON.parse(savedBudgetSetup));
+      const parsedSetup = JSON.parse(savedBudgetSetup);
+      setBudgetSetup(parsedSetup);
     }
   }, []);
 

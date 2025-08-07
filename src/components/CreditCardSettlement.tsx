@@ -140,7 +140,7 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
           <button
             onClick={() => setShowTransactions(!showTransactions)}
             className="text-blue-600 hover:text-blue-700 font-medium text-sm mb-4"
-          >
+              ? `Last settled: ${format(new Date(creditCardBalance.lastSettlementDate), 'MMM d, yyyy')}`
             {showTransactions ? 'Hide' : 'Show'} Credit Card Transactions ({creditCardBalance.transactionsSinceSettlement.length})
           </button>
 

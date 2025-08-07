@@ -8,7 +8,7 @@ export const useCreditCardBalance = (
   
   const creditCardBalance = useMemo(() => {
     // Filter transactions since last settlement
-    const settlementDate = lastSettlementDate ? new Date(lastSettlementDate) : new Date('2000-01-01');
+    const settlementDate = lastSettlementDate ? new Date(lastSettlementDate) : new Date('1900-01-01');
     
     const transactionsSinceSettlement = transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
