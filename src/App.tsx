@@ -110,7 +110,7 @@ function App() {
   if (!config && !useSampleData) {
     return (
       <div>
-        <GoogleSheetsSetup onConfigSave={handleConfigSave} />
+        <GoogleSheetsSetup onConfigSave={handleConfigSave} existingConfig={config} />
         <div className="fixed bottom-4 right-4">
           <button
             onClick={handleUseSampleData}
