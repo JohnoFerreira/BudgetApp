@@ -110,7 +110,14 @@ function App() {
   if (!config && !useSampleData) {
     return (
       <div>
-        <GoogleSheetsSetup onConfigSave={handleConfigSave} existingConfig={config} />
+        <GoogleSheetsSetup 
+          onConfigSave={handleConfigSave} 
+          existingConfig={config}
+          onFullDataImport={() => {
+            // Reload the page to refresh all data after import
+            window.location.reload();
+          }}
+        />
         <div className="fixed bottom-4 right-4">
           <button
             onClick={handleUseSampleData}
@@ -140,6 +147,12 @@ function App() {
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
             >
               Update Configuration
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors duration-200"
+            >
+              Refresh App
             </button>
             <button
               onClick={() => setActiveTab('balances')}
@@ -271,11 +284,18 @@ function App() {
               <button
                 onClick={() => {
                   localStorage.removeItem('googleSheetsConfig');
+                  localStorage.removeItem('budgetSetup');
+                  localStorage.removeItem('savingsGoals');
                   setConfig(null);
+                  setBudgetSetup(null);
+                  setSavingsGoals([]);
+                  // Reset to initial state
+                  setUseSampleData(false);
+                  setActiveTab('dashboard');
                 }}
-                className="px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-lg transition-colors duration-200"
+                className="px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 rounded-lg transition-colors duration-200"
               >
-                API Settings
+                Reset All Data
               </button>
             </nav>
           </div>

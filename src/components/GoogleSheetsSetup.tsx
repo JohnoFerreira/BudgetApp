@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { Sheet, Key, Database, AlertCircle, Download, Upload, Copy, Check } from 'lucide-react';
+import { Sheet, Key, Database, AlertCircle, Download, Upload, Copy, Check, Settings } from 'lucide-react';
 import { GoogleSheetsConfig } from '../types';
 
 interface GoogleSheetsSetupProps {
   onConfigSave: (config: GoogleSheetsConfig) => void;
   existingConfig?: GoogleSheetsConfig | null;
+  onFullDataImport?: (data: any) => void;
 }
 
-export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSave, existingConfig }) => {
+export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSave, existingConfig, onFullDataImport }) => {
   const [spreadsheetId, setSpreadsheetId] = useState(existingConfig?.spreadsheetId || '');
   const [apiKey, setApiKey] = useState(existingConfig?.apiKey || '');
   const [range, setRange] = useState(existingConfig?.range || 'Sheet1!A:F');
-  const [showExport, setShowExport] = useState(false);
-  const [showImport, setShowImport] = useState(false);
+  const [showApiExport, setShowApiExport] = useState(false);
+  const [showApiImport, setShowApiImport] = useState(false);
+  const [showFullExport, setShowFullExport] = useState(false);
+  const [showFullImport, setShowFullImport] = useState(false);
   const [importText, setImportText] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [apiCopied, setApiCopied] = useState(false);
+  const [fullCopied, setFullCopied] = useState(false);
   const [importError, setImportError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -22,22 +26,22 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
     onConfigSave({ spreadsheetId, apiKey, range });
   };
 
-  const handleExport = () => {
+  const handleApiExport = () => {
     const config = { spreadsheetId, apiKey, range };
     const configString = JSON.stringify(config, null, 2);
     navigator.clipboard.writeText(configString);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setApiCopied(true);
+    setTimeout(() => setApiCopied(false), 2000);
   };
 
-  const handleImport = () => {
+  const handleApiImport = () => {
     try {
       const config = JSON.parse(importText);
       if (config.spreadsheetId && config.apiKey && config.range) {
         setSpreadsheetId(config.spreadsheetId);
         setApiKey(config.apiKey);
         setRange(config.range);
-        setShowImport(false);
+        setShowApiImport(false);
         setImportText('');
         setImportError('');
       } else {
@@ -48,7 +52,63 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
     }
   };
 
-  const downloadConfig = () => {
+  const handleFullExport = () => {
+    const fullData = {
+      googleSheetsConfig: { spreadsheetId, apiKey, range },
+      budgetSetup: localStorage.getItem('budgetSetup') ? JSON.parse(localStorage.getItem('budgetSetup')!) : null,
+      savingsGoals: localStorage.getItem('savingsGoals') ? JSON.parse(localStorage.getItem('savingsGoals')!) : null,
+      exportDate: new Date().toISOString(),
+      version: '1.0'
+    };
+    const dataString = JSON.stringify(fullData, null, 2);
+    navigator.clipboard.writeText(dataString);
+    setFullCopied(true);
+    setTimeout(() => setFullCopied(false), 2000);
+  };
+
+  const handleFullImport = () => {
+    try {
+      const fullData = JSON.parse(importText);
+      
+      // Validate the structure
+      if (!fullData.googleSheetsConfig || !fullData.version) {
+        setImportError('Invalid full data format. This doesn\'t appear to be a complete BudgetFlow export.');
+        return;
+      }
+
+      // Import Google Sheets config
+      if (fullData.googleSheetsConfig.spreadsheetId && fullData.googleSheetsConfig.apiKey) {
+        setSpreadsheetId(fullData.googleSheetsConfig.spreadsheetId);
+        setApiKey(fullData.googleSheetsConfig.apiKey);
+        setRange(fullData.googleSheetsConfig.range || 'Sheet1!A:F');
+      }
+
+      // Import other data to localStorage
+      if (fullData.budgetSetup) {
+        localStorage.setItem('budgetSetup', JSON.stringify(fullData.budgetSetup));
+      }
+      if (fullData.savingsGoals) {
+        localStorage.setItem('savingsGoals', JSON.stringify(fullData.savingsGoals));
+      }
+
+      // Notify parent component to refresh data
+      if (onFullDataImport) {
+        onFullDataImport(fullData);
+      }
+
+      setShowFullImport(false);
+      setImportText('');
+      setImportError('');
+      
+      // Show success message
+      alert('All data imported successfully! The page will refresh to load your settings.');
+      window.location.reload();
+    } catch (error) {
+      setImportError('Invalid JSON format. Please check your complete data export.');
+    }
+  };
+
+  const downloadApiConfig = () => {
     const config = { spreadsheetId, apiKey, range };
     const configString = JSON.stringify(config, null, 2);
     const blob = new Blob([configString], { type: 'application/json' });
@@ -56,6 +116,26 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
     const a = document.createElement('a');
     a.href = url;
     a.download = 'budgetflow-config.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadFullData = () => {
+    const fullData = {
+      googleSheetsConfig: { spreadsheetId, apiKey, range },
+      budgetSetup: localStorage.getItem('budgetSetup') ? JSON.parse(localStorage.getItem('budgetSetup')!) : null,
+      savingsGoals: localStorage.getItem('savingsGoals') ? JSON.parse(localStorage.getItem('savingsGoals')!) : null,
+      exportDate: new Date().toISOString(),
+      version: '1.0'
+    };
+    const dataString = JSON.stringify(fullData, null, 2);
+    const blob = new Blob([dataString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'budgetflow-complete-backup.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -75,45 +155,65 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
           <p className="text-gray-600 mt-2">Link your spreadsheet to start tracking your finances</p>
         </div>
 
-        {/* Export/Import Buttons */}
+        {/* Export/Import Buttons - Split into API and Full Data */}
         {(spreadsheetId || apiKey) && (
-          <div className="flex gap-2 mb-6">
-            <button
-              type="button"
-              onClick={() => setShowExport(!showExport)}
-              className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowImport(!showImport)}
-              className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Import
-            </button>
+          <div className="space-y-4 mb-6">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowApiExport(!showApiExport)}
+                className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Export API Only
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowApiImport(!showApiImport)}
+                className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Import API Only
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFullExport(!showFullExport)}
+                className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-green-300 rounded-lg text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Export All Data
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFullImport(!showFullImport)}
+                className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-green-300 rounded-lg text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Import All Data
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Export Section */}
-        {showExport && (
+        {/* API Export Section */}
+        {showApiExport && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">Export Configuration</h3>
+            <h3 className="text-sm font-medium text-blue-900 mb-2">Export API Configuration</h3>
             <p className="text-sm text-blue-800 mb-3">
-              Save your configuration to use on other devices
+              Save only your Google Sheets API settings
             </p>
             <div className="flex gap-2">
               <button
-                onClick={handleExport}
+                onClick={handleApiExport}
                 className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200"
               >
-                {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                {copied ? 'Copied!' : 'Copy to Clipboard'}
+                {apiCopied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                {apiCopied ? 'Copied!' : 'Copy to Clipboard'}
               </button>
               <button
-                onClick={downloadConfig}
+                onClick={downloadApiConfig}
                 className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200"
               >
                 <Download className="h-4 w-4 mr-2" />
@@ -123,12 +223,12 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
           </div>
         )}
 
-        {/* Import Section */}
-        {showImport && (
+        {/* API Import Section */}
+        {showApiImport && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <h3 className="text-sm font-medium text-green-900 mb-2">Import Configuration</h3>
+            <h3 className="text-sm font-medium text-green-900 mb-2">Import API Configuration</h3>
             <p className="text-sm text-green-800 mb-3">
-              Paste your exported configuration here
+              Paste your exported API configuration here
             </p>
             <textarea
               value={importText}
@@ -141,11 +241,67 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
               <p className="text-sm text-red-600 mb-3">{importError}</p>
             )}
             <button
-              onClick={handleImport}
+              onClick={handleApiImport}
               disabled={!importText.trim()}
               className="w-full px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               Import Configuration
+            </button>
+          </div>
+        )}
+
+        {/* Full Data Export Section */}
+        {showFullExport && (
+          <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <h3 className="text-sm font-medium text-purple-900 mb-2">Export Complete Data</h3>
+            <p className="text-sm text-purple-800 mb-3">
+              Save ALL your BudgetFlow data including API settings, budget setup, savings goals, and settlement history
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleFullExport}
+                className="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
+              >
+                {fullCopied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                {fullCopied ? 'Copied!' : 'Copy to Clipboard'}
+              </button>
+              <button
+                onClick={downloadFullData}
+                className="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors duration-200"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Complete Backup
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Full Data Import Section */}
+        {showFullImport && (
+          <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <h3 className="text-sm font-medium text-orange-900 mb-2">Import Complete Data</h3>
+            <p className="text-sm text-orange-800 mb-3">
+              Restore ALL your BudgetFlow data from a complete backup
+            </p>
+            <div className="mb-3 p-3 bg-orange-100 border border-orange-300 rounded text-xs text-orange-800">
+              <strong>⚠️ Warning:</strong> This will overwrite all your current data including budget setup, savings goals, and settlement history.
+            </div>
+            <textarea
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 mb-3"
+              rows={4}
+              placeholder="Paste your complete BudgetFlow backup JSON here..."
+            />
+            {importError && (
+              <p className="text-sm text-red-600 mb-3">{importError}</p>
+            )}
+            <button
+              onClick={handleFullImport}
+              disabled={!importText.trim()}
+              className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              Import Complete Data
             </button>
           </div>
         )}
@@ -210,7 +366,15 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
           <div className="flex items-start">
             <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
             <div className="text-sm text-amber-800">
-              <p className="font-medium mb-1">Setup Instructions:</p>
+              <p className="font-medium mb-1">Data Management:</p>
+              <div className="mb-3">
+                <p className="font-medium text-amber-900">Export Options:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li><strong>API Only:</strong> Just Google Sheets connection settings</li>
+                  <li><strong>All Data:</strong> Complete backup including budget setup, savings goals, settlement history</li>
+                </ul>
+              </div>
+              <p className="font-medium mb-1">Google Sheets Setup Instructions:</p>
               <ol className="list-decimal list-inside space-y-1">
                 <li>Enable Google Sheets API in Google Cloud Console</li>
                 <li>Create an API key and restrict it to Sheets API</li>
