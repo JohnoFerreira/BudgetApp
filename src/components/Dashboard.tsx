@@ -99,143 +99,154 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Header with Refresh */}
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Financial Overview</h2>
-          <p className="text-gray-600">
-            {budgetSetup ? `${budgetSetup.selfName} & ${budgetSetup.spouseName}` : 'Your'} Budget Dashboard - {dateRange.label}
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          {onDateRangeChange && (
-            <DateRangeFilter selectedRange={dateRange} onRangeChange={onDateRangeChange} />
-          )}
-          {lastUpdated && (
-            <div className="text-sm text-gray-500">
-              Last updated: {format(lastUpdated, 'MMM d, h:mm a')}
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
+              <PieChart className="h-8 w-8 text-white" />
             </div>
-          )}
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors duration-200"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                Financial Overview
+              </h1>
+              <p className="text-gray-600 text-lg">
+                {budgetSetup ? `${budgetSetup.selfName} & ${budgetSetup.spouseName}` : 'Your'} Budget Dashboard
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              {onDateRangeChange && (
+                <DateRangeFilter selectedRange={dateRange} onRangeChange={onDateRangeChange} />
+              )}
+              {lastUpdated && (
+                <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+                  Last updated: {format(lastUpdated, 'MMM d, h:mm a')}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={onRefresh}
+              disabled={loading}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 font-medium"
+            >
+              <RefreshCw className={`h-5 w-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh Data
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Individual and Combined Summary Cards */}
       {budgetSetup ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Your Summary */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <User className="h-5 w-5 text-blue-600" />
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                  <User className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">{budgetSetup.selfName}</h3>
+                <h3 className="text-xl font-bold text-gray-900">{budgetSetup.selfName}</h3>
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Income</span>
-                <span className="font-medium text-green-600">{formatCurrency(selfSummary.income)}</span>
+                <span className="text-gray-600 font-medium">Income</span>
+                <span className="font-bold text-green-600 text-lg">{formatCurrency(selfSummary.income)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Fixed Expenses</span>
-                <span className="font-medium text-red-600">{formatCurrency(selfSummary.expenses)}</span>
+                <span className="text-gray-600 font-medium">Fixed Expenses</span>
+                <span className="font-bold text-red-600 text-lg">{formatCurrency(selfSummary.expenses)}</span>
               </div>
-              <div className="flex justify-between items-center border-t pt-3">
-                <span className="text-sm font-medium text-gray-900">Available</span>
-                <span className={`font-bold ${selfSummary.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className="flex justify-between items-center border-t border-gray-100 pt-4">
+                <span className="font-bold text-gray-900 text-lg">Available</span>
+                <span className={`font-bold text-xl ${selfSummary.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(selfSummary.net)}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
                 <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 shadow-sm"
                   style={{ width: `${Math.min((selfSummary.expenses / selfSummary.income) * 100, 100)}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm text-gray-500 font-medium">
                 {selfSummary.income > 0 ? ((selfSummary.expenses / selfSummary.income) * 100).toFixed(1) : 0}% of income used
               </p>
             </div>
           </div>
 
           {/* Spouse Summary */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <User className="h-5 w-5 text-purple-600" />
+                <div className="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg">
+                  <User className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">{budgetSetup.spouseName}</h3>
+                <h3 className="text-xl font-bold text-gray-900">{budgetSetup.spouseName}</h3>
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Income</span>
-                <span className="font-medium text-green-600">{formatCurrency(spouseSummary.income)}</span>
+                <span className="text-gray-600 font-medium">Income</span>
+                <span className="font-bold text-green-600 text-lg">{formatCurrency(spouseSummary.income)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Fixed Expenses</span>
-                <span className="font-medium text-red-600">{formatCurrency(spouseSummary.expenses)}</span>
+                <span className="text-gray-600 font-medium">Fixed Expenses</span>
+                <span className="font-bold text-red-600 text-lg">{formatCurrency(spouseSummary.expenses)}</span>
               </div>
-              <div className="flex justify-between items-center border-t pt-3">
-                <span className="text-sm font-medium text-gray-900">Available</span>
-                <span className={`font-bold ${spouseSummary.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className="flex justify-between items-center border-t border-gray-100 pt-4">
+                <span className="font-bold text-gray-900 text-lg">Available</span>
+                <span className={`font-bold text-xl ${spouseSummary.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(spouseSummary.net)}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
                 <div 
-                  className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-sm"
                   style={{ width: `${Math.min((spouseSummary.expenses / spouseSummary.income) * 100, 100)}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm text-gray-500 font-medium">
                 {spouseSummary.income > 0 ? ((spouseSummary.expenses / spouseSummary.income) * 100).toFixed(1) : 0}% of income used
               </p>
             </div>
           </div>
 
           {/* Combined Summary */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Users className="h-5 w-5 text-green-600" />
+                <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg">
+                  <Users className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Combined</h3>
+                <h3 className="text-xl font-bold text-gray-900">Combined</h3>
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Income</span>
-                <span className="font-medium text-green-600">{formatCurrency(summary.totalIncome)}</span>
+                <span className="text-gray-600 font-medium">Total Income</span>
+                <span className="font-bold text-green-600 text-lg">{formatCurrency(summary.totalIncome)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Expenses</span>
-                <span className="font-medium text-red-600">{formatCurrency(summary.totalExpenses)}</span>
+                <span className="text-gray-600 font-medium">Total Expenses</span>
+                <span className="font-bold text-red-600 text-lg">{formatCurrency(summary.totalExpenses)}</span>
               </div>
-              <div className="flex justify-between items-center border-t pt-3">
-                <span className="text-sm font-medium text-gray-900">Net Income</span>
-                <span className={`font-bold ${summary.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className="flex justify-between items-center border-t border-gray-100 pt-4">
+                <span className="font-bold text-gray-900 text-lg">Net Income</span>
+                <span className={`font-bold text-xl ${summary.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(summary.netIncome)}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
                 <div 
-                  className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full transition-all duration-500 shadow-sm"
                   style={{ width: `${Math.min(budgetUsagePercentage, 100)}%` }}
                 ></div>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm text-gray-500 font-medium">
                 {budgetUsagePercentage.toFixed(1)}% of budget used
               </p>
             </div>
@@ -243,7 +254,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       ) : (
         /* Fallback to original summary cards if no budget setup */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between">
               <div>
@@ -304,13 +315,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Trends</h2>
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Monthly Trends</h2>
+          </div>
           <TrendChart data={monthlyTrends} />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Budget Overview</h2>
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+              <PieChart className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Budget Overview</h2>
+          </div>
           <BudgetChart budgets={budgets} />
         </div>
       </div>

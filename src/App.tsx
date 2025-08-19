@@ -1,4 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  BarChart3, 
+  PieChart, 
+  Brain, 
+  CreditCard, 
+  Wallet, 
+  Target, 
+  Settings, 
+  RefreshCw,
+  Menu,
+  X,
+  Home,
+  User,
+  Users,
+  TrendingUp
+} from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { BudgetAnalysis } from './components/BudgetAnalysis';
 import { SmartRecommendations } from './components/SmartRecommendations';
@@ -22,6 +38,7 @@ function App() {
   const [budgetSetup, setBudgetSetup] = useState<BudgetSetupType | null>(null);
   const [useSampleData, setUseSampleData] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances' | 'goals'>('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>(() => {
     const saved = localStorage.getItem('savingsGoals');
     return saved ? JSON.parse(saved) : generateSampleSavingsGoals();
@@ -61,6 +78,20 @@ function App() {
     localStorage.setItem('budgetSetup', JSON.stringify(setup));
     setActiveTab('dashboard');
   };
+
+  const navigationItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home, color: 'text-blue-600' },
+    ...(budgetSetup ? [
+      { id: 'self', label: budgetSetup.selfName, icon: User, color: 'text-blue-600' },
+      { id: 'spouse', label: budgetSetup.spouseName, icon: User, color: 'text-purple-600' }
+    ] : []),
+    { id: 'analysis', label: 'Budget Analysis', icon: BarChart3, color: 'text-green-600' },
+    { id: 'recommendations', label: 'Smart Insights', icon: Brain, color: 'text-purple-600' },
+    { id: 'settlement', label: 'Credit Card', icon: CreditCard, color: 'text-red-600' },
+    { id: 'balances', label: 'Bank Balances', icon: Wallet, color: 'text-emerald-600' },
+    { id: 'goals', label: 'Savings Goals', icon: Target, color: 'text-orange-600' },
+    { id: 'setup', label: 'Budget Setup', icon: Settings, color: 'text-gray-600' }
+  ];
 
   const handleCreditCardSettlement = () => {
     if (budgetSetup) {
@@ -177,132 +208,108 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">BudgetFlow</h1>
-              <p className="text-gray-600 mt-1">Smart Financial Management Dashboard</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0`}>
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">BudgetFlow</h1>
+                <p className="text-xs text-blue-100">Financial Analytics</p>
+              </div>
             </div>
-            <nav className="flex space-x-8">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  activeTab === 'dashboard'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Dashboard
-              </button>
-              {budgetSetup && (
-                <>
-                  <button
-                    onClick={() => setActiveTab('self')}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                      activeTab === 'self'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {budgetSetup.selfName}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('spouse')}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                      activeTab === 'spouse'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {budgetSetup.spouseName}
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setActiveTab('analysis')}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  activeTab === 'analysis'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Budget Analysis
-              </button>
-              <button
-                onClick={() => setActiveTab('recommendations')}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  activeTab === 'recommendations'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Smart Insights
-              </button>
-              <button
-                onClick={() => setActiveTab('settlement')}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  activeTab === 'settlement'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Credit Card
-              </button>
-              <button
-                onClick={() => setActiveTab('balances')}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  activeTab === 'balances'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Bank Balances
-              </button>
-              <button
-                onClick={() => setActiveTab('goals')}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  activeTab === 'goals'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Savings Goals
-              </button>
-              <button
-                onClick={() => setActiveTab('setup')}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  activeTab === 'setup'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Budget Setup
-              </button>
-              <button
-                onClick={() => {
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 text-white hover:bg-white/20 rounded-lg transition-colors duration-200"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id as any);
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${
+                    isActive
+                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm border border-blue-200'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 ${isActive ? item.color : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  <span className={`font-medium ${isActive ? 'text-blue-700' : ''}`}>{item.label}</span>
+                  {isActive && <div className="ml-auto w-2 h-2 bg-blue-500 rounded-full"></div>}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Footer Actions */}
+          <div className="p-4 border-t border-gray-200 space-y-2">
+            <button
+              onClick={refetch}
+              disabled={loading}
+              className="w-full flex items-center space-x-3 px-4 py-3 text-left rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 group"
+            >
+              <RefreshCw className={`h-5 w-5 text-gray-400 group-hover:text-gray-600 ${loading ? 'animate-spin' : ''}`} />
+              <span className="font-medium">Refresh Data</span>
+            </button>
+            <button
+              onClick={() => {
+                if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
                   localStorage.removeItem('googleSheetsConfig');
                   localStorage.removeItem('budgetSetup');
                   localStorage.removeItem('savingsGoals');
                   setConfig(null);
                   setBudgetSetup(null);
                   setSavingsGoals([]);
-                  // Reset to initial state
                   setUseSampleData(false);
                   setActiveTab('dashboard');
-                }}
-                className="px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 rounded-lg transition-colors duration-200"
-              >
-                Reset All Data
-              </button>
-            </nav>
+                }
+              }}
+              className="w-full flex items-center space-x-3 px-4 py-3 text-left rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 group"
+            >
+              <X className="h-5 w-5 text-red-400 group-hover:text-red-600" />
+              <span className="font-medium">Reset All Data</span>
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Mobile menu button */}
+      <div className="lg:hidden fixed top-4 left-4 z-40">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="p-3 bg-white rounded-xl shadow-lg border border-gray-200 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+      </div>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <div className="lg:ml-64 min-h-screen">
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'dashboard' && (
           <Dashboard
             summary={summary}
@@ -392,6 +399,7 @@ function App() {
             budgetSetup={budgetSetup}
           />
         )}
+      </div>
       </div>
     </div>
   );
