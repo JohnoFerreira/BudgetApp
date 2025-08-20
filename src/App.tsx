@@ -308,7 +308,7 @@ function App() {
       )}
 
       {/* Main content */}
-      <div className="lg:ml-64 min-h-screen">
+      <div className="min-h-screen lg:pl-64">
         <div className="px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'dashboard' && (
           <Dashboard
