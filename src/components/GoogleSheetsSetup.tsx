@@ -6,12 +6,22 @@ interface GoogleSheetsSetupProps {
   onConfigSave: (config: GoogleSheetsConfig) => void;
   existingConfig?: GoogleSheetsConfig | null;
   onFullDataImport?: (data: any) => void;
+  isLocked?: boolean;
+  onUnlock?: () => void;
 }
 
-export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSave, existingConfig, onFullDataImport }) => {
+export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ 
+  onConfigSave, 
+  existingConfig, 
+  onFullDataImport,
+  isLocked = false,
+  onUnlock
+}) => {
   const [spreadsheetId, setSpreadsheetId] = useState(existingConfig?.spreadsheetId || '');
-  const [apiKey, setApiKey] = useState(existingConfig?.apiKey || '');
+  const [apiKey, setApiKey] = useState(isLocked ? '••••••••••••••••' : (existingConfig?.apiKey || ''));
   const [range, setRange] = useState(existingConfig?.range || 'Sheet1!A:F');
+  const [unlockPassword, setUnlockPassword] = useState('');
+  const [showUnlockForm, setShowUnlockForm] = useState(false);
   const [showApiExport, setShowApiExport] = useState(false);
   const [showApiImport, setShowApiImport] = useState(false);
   const [showFullExport, setShowFullExport] = useState(false);
@@ -21,8 +31,25 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
   const [fullCopied, setFullCopied] = useState(false);
   const [importError, setImportError] = useState('');
 
+  const handleUnlock = () => {
+    // Simple password check - you can make this more secure
+    if (unlockPassword === 'admin123' || unlockPassword === 'unlock') {
+      if (onUnlock) {
+        onUnlock();
+      }
+      setShowUnlockForm(false);
+      setUnlockPassword('');
+    } else {
+      setImportError('Incorrect password. Try "admin123" or "unlock"');
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) {
+      setImportError('Settings are locked. Please unlock to make changes.');
+      return;
+    }
     onConfigSave({ spreadsheetId, apiKey, range });
   };
 
@@ -145,6 +172,60 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+        {/* Lock Status Indicator */}
+        {isLocked && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="p-1 bg-amber-100 rounded">
+                <Key className="h-4 w-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-amber-900">Settings Locked</p>
+                <p className="text-xs text-amber-800">API settings are protected from changes</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowUnlockForm(!showUnlockForm)}
+              className="mt-2 text-xs text-amber-700 hover:text-amber-800 underline"
+            >
+              Unlock Settings
+            </button>
+          </div>
+        )}
+
+        {/* Unlock Form */}
+        {showUnlockForm && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-sm font-medium text-blue-900 mb-2">Unlock Settings</h3>
+            <input
+              type="password"
+              value={unlockPassword}
+              onChange={(e) => setUnlockPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
+              placeholder="Enter unlock password"
+              onKeyPress={(e) => e.key === 'Enter' && handleUnlock()}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleUnlock}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+              >
+                Unlock
+              </button>
+              <button
+                onClick={() => {
+                  setShowUnlockForm(false);
+                  setUnlockPassword('');
+                  setImportError('');
+                }}
+                className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
             <Sheet className="h-8 w-8 text-blue-600" />
@@ -156,7 +237,7 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
         </div>
 
         {/* Export/Import Buttons - Split into API and Full Data */}
-        {(spreadsheetId || apiKey) && (
+        {(spreadsheetId || apiKey) && !isLocked && (
           <div className="space-y-4 mb-6">
             <div className="flex gap-2">
               <button
@@ -311,14 +392,18 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
             <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-2">
               <Key className="inline h-4 w-4 mr-1" />
               Google Sheets API Key
+              {isLocked && <span className="text-xs text-amber-600 ml-2">(Protected)</span>}
             </label>
             <input
               type="text"
               id="apiKey"
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              onChange={(e) => !isLocked && setApiKey(e.target.value)}
+              className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                isLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+              }`}
               placeholder="Enter your API key"
+              readOnly={isLocked}
               required
             />
           </div>
@@ -327,14 +412,18 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
             <label htmlFor="spreadsheetId" className="block text-sm font-medium text-gray-700 mb-2">
               <Database className="inline h-4 w-4 mr-1" />
               Spreadsheet ID
+              {isLocked && <span className="text-xs text-amber-600 ml-2">(Protected)</span>}
             </label>
             <input
               type="text"
               id="spreadsheetId"
               value={spreadsheetId}
-              onChange={(e) => setSpreadsheetId(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              onChange={(e) => !isLocked && setSpreadsheetId(e.target.value)}
+              className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                isLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+              }`}
               placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+              readOnly={isLocked}
               required
             />
           </div>
@@ -347,18 +436,32 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ onConfigSa
               type="text"
               id="range"
               value={range}
-              onChange={(e) => setRange(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              onChange={(e) => !isLocked && setRange(e.target.value)}
+              className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                isLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+              }`}
               placeholder="Sheet1!A:F"
+              readOnly={isLocked}
               required
             />
           </div>
 
+          {importError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{importError}</p>
+            </div>
+          )}
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            className={`w-full py-3 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
+              isLocked 
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
+            }`}
+            disabled={isLocked}
           >
-            {existingConfig ? 'Update Configuration' : 'Connect Spreadsheet'}
+            {isLocked ? 'Settings Locked' : (existingConfig ? 'Update Configuration' : 'Connect Spreadsheet')}
           </button>
         </form>
 

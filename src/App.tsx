@@ -44,6 +44,9 @@ function App() {
     return saved ? JSON.parse(saved) : generateSampleSavingsGoals();
   });
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
+  const [isApiLocked, setIsApiLocked] = useState(() => {
+    return localStorage.getItem('apiLocked') === 'true';
+  });
   
   // Load config and budget setup from localStorage
   useEffect(() => {
@@ -71,6 +74,16 @@ function App() {
   const handleConfigSave = (newConfig: GoogleSheetsConfig) => {
     setConfig(newConfig);
     localStorage.setItem('googleSheetsConfig', JSON.stringify(newConfig));
+    // Auto-lock after saving if not already locked
+    if (!isApiLocked) {
+      setIsApiLocked(true);
+      localStorage.setItem('apiLocked', 'true');
+    }
+  };
+
+  const handleApiUnlock = () => {
+    setIsApiLocked(false);
+    localStorage.setItem('apiLocked', 'false');
   };
 
   const handleBudgetSetupSave = (setup: BudgetSetupType) => {
@@ -144,6 +157,8 @@ function App() {
         <GoogleSheetsSetup 
           onConfigSave={handleConfigSave} 
           existingConfig={config}
+          isLocked={isApiLocked}
+          onUnlock={handleApiUnlock}
           onFullDataImport={() => {
             // Reload the page to refresh all data after import
             window.location.reload();
@@ -184,16 +199,6 @@ function App() {
               className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors duration-200"
             >
               Refresh App
-            </button>
-            <button
-              onClick={() => setActiveTab('balances')}
-              className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                activeTab === 'balances'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Bank Balances
             </button>
             <button
               onClick={handleUseSampleData}
@@ -273,10 +278,12 @@ function App() {
                   localStorage.removeItem('googleSheetsConfig');
                   localStorage.removeItem('budgetSetup');
                   localStorage.removeItem('savingsGoals');
+                  localStorage.removeItem('apiLocked');
                   setConfig(null);
                   setBudgetSetup(null);
                   setSavingsGoals([]);
                   setUseSampleData(false);
+                  setIsApiLocked(false);
                   setActiveTab('dashboard');
                 }
               }}
