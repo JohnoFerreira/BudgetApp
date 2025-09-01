@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, User, Users, DollarSign, Calendar, Settings, Save, ArrowLeft } from 'lucide-react';
-import { IncomeSource, FixedExpense, BudgetSetup } from '../types';
+import { Plus, Trash2, User, Users, DollarSign, Calendar, Settings, Save, ArrowLeft, PieChart } from 'lucide-react';
+import { IncomeSource, FixedExpense, BudgetSetup, ManualBudget } from '../types';
 
 interface BudgetSetupProps {
   onSave: (setup: BudgetSetup) => void;
@@ -13,6 +13,7 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
   const [spouseName, setSpouseName] = useState(initialSetup?.spouseName || '');
   const [defaultSplitPercentage, setDefaultSplitPercentage] = useState(initialSetup?.defaultSplitPercentage || 55);
   const [activeTab, setActiveTab] = useState<'income' | 'expenses' | 'settings'>('income');
+  const [activeTab, setActiveTab] = useState<'income' | 'expenses' | 'budgets' | 'settings'>('income');
   
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>(
     initialSetup?.incomeSources || [
@@ -48,6 +49,27 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
         dueDate: 1,
         isActive: true
       }
+    ]
+  );
+
+  const [manualBudgets, setManualBudgets] = useState<ManualBudget[]>(
+    initialSetup?.manualBudgets || [
+      { id: '1', category: 'Groceries', allocatedAmount: 12000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '2', category: 'Electricity', allocatedAmount: 2500, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '3', category: 'Hair/Nails/Beauty', allocatedAmount: 2000, assignedTo: 'self', isActive: true },
+      { id: '4', category: 'Pet Expenses', allocatedAmount: 1500, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '5', category: 'Eating Out', allocatedAmount: 4000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '6', category: 'Clothing', allocatedAmount: 3000, assignedTo: 'shared', splitPercentage: 50, isActive: true },
+      { id: '7', category: 'Golf', allocatedAmount: 2500, assignedTo: 'self', isActive: true },
+      { id: '8', category: 'Dischem/Clicks', allocatedAmount: 2000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '9', category: 'Petrol', allocatedAmount: 3500, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '10', category: 'Gifts', allocatedAmount: 1500, assignedTo: 'shared', splitPercentage: 50, isActive: true },
+      { id: '11', category: 'Travel', allocatedAmount: 5000, assignedTo: 'shared', splitPercentage: 50, isActive: true },
+      { id: '12', category: 'Wine', allocatedAmount: 2000, assignedTo: 'shared', splitPercentage: 60, isActive: true },
+      { id: '13', category: 'Kids', allocatedAmount: 8000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '14', category: 'House', allocatedAmount: 4000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '15', category: 'Subscriptions', allocatedAmount: 1500, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+      { id: '16', category: 'Ad Hoc', allocatedAmount: 5000, assignedTo: 'self', isActive: true }
     ]
   );
 
@@ -115,7 +137,8 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
       fixedExpenses,
       selfName,
       spouseName,
-      defaultSplitPercentage
+      defaultSplitPercentage,
+      manualBudgets
     };
     onSave(setup);
   };
@@ -154,6 +177,43 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
     'Clothing', 'Golf', 'Dischem/Clicks', 'Petrol', 'Gifts', 'Travel', 'Wine', 
     'Kids', 'House', 'Subscriptions', 'Ad Hoc'
   ];
+
+  const addManualBudget = () => {
+    const newBudget: ManualBudget = {
+      id: Date.now().toString(),
+      category: 'Ad Hoc',
+      allocatedAmount: 0,
+      assignedTo: 'shared',
+      splitPercentage: 55,
+      isActive: true
+    };
+    setManualBudgets([...manualBudgets, newBudget]);
+  };
+
+  const updateManualBudget = (id: string, updates: Partial<ManualBudget>) => {
+    setManualBudgets(budgets => 
+      budgets.map(budget => 
+        budget.id === id ? { ...budget, ...updates } : budget
+      )
+    );
+  };
+
+  const removeManualBudget = (id: string) => {
+    setManualBudgets(budgets => budgets.filter(budget => budget.id !== id));
+  };
+
+  const getTotalBudgetAllocated = (assignedTo?: 'self' | 'spouse' | 'shared') => {
+    return manualBudgets
+      .filter(budget => budget.isActive && (!assignedTo || budget.assignedTo === assignedTo))
+      .reduce((total, budget) => {
+        if (budget.assignedTo === 'shared' && budget.splitPercentage) {
+          return total + (assignedTo === 'self' ? budget.allocatedAmount * (budget.splitPercentage / 100) : 
+                         assignedTo === 'spouse' ? budget.allocatedAmount * ((100 - budget.splitPercentage) / 100) : 
+                         budget.allocatedAmount);
+        }
+        return total + budget.allocatedAmount;
+      }, 0);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -201,10 +261,14 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
                 <span className="text-sm text-gray-600">Fixed Expenses:</span>
                 <span className="font-medium text-red-600">{formatCurrency(getTotalExpenses('self'))}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Budget Allocated:</span>
+                <span className="font-medium text-blue-600">{formatCurrency(getTotalBudgetAllocated('self'))}</span>
+              </div>
               <div className="flex justify-between border-t pt-2">
                 <span className="text-sm font-medium text-gray-900">Available:</span>
-                <span className={`font-bold ${getTotalIncome('self') - getTotalExpenses('self') >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(getTotalIncome('self') - getTotalExpenses('self'))}
+                <span className={`font-bold ${getTotalIncome('self') - getTotalExpenses('self') - getTotalBudgetAllocated('self') >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(getTotalIncome('self') - getTotalExpenses('self') - getTotalBudgetAllocated('self'))}
                 </span>
               </div>
             </div>
@@ -282,6 +346,17 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
               >
                 <Calendar className="inline h-4 w-4 mr-2" />
                 Fixed Expenses
+              </button>
+              <button
+                onClick={() => setActiveTab('budgets')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === 'budgets'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <PieChart className="inline h-4 w-4 mr-2" />
+                Budget Categories
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
@@ -484,6 +559,92 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
                           </span>
                         )}
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Budget Categories Tab */}
+            {activeTab === 'budgets' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Budget Categories</h3>
+                  <button
+                    onClick={addManualBudget}
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Budget Category
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {manualBudgets.map((budget) => (
+                    <div key={budget.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                          <select
+                            value={budget.category}
+                            onChange={(e) => updateManualBudget(budget.id, { category: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            {expenseCategories.map(category => (
+                              <option key={category} value={category}>{category}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Budget</label>
+                          <input
+                            type="number"
+                            value={budget.allocatedAmount}
+                            onChange={(e) => updateManualBudget(budget.id, { allocatedAmount: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+                          <select
+                            value={budget.assignedTo}
+                            onChange={(e) => updateManualBudget(budget.id, { assignedTo: e.target.value as any })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="self">{selfName || 'You'}</option>
+                            <option value="spouse">{spouseName || 'Spouse'}</option>
+                            <option value="shared">Shared</option>
+                          </select>
+                        </div>
+                        {budget.assignedTo === 'shared' && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Your %</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={budget.splitPercentage || 50}
+                              onChange={(e) => updateManualBudget(budget.id, { splitPercentage: parseFloat(e.target.value) || 50 })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-end">
+                          <button
+                            onClick={() => removeManualBudget(budget.id)}
+                            className="p-2 text-red-600 hover:text-red-700 transition-colors duration-200"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {budget.assignedTo === 'shared' && budget.splitPercentage && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          Your share: {formatCurrency(budget.allocatedAmount * (budget.splitPercentage / 100))} | 
+                          {spouseName || 'Spouse'}'s share: {formatCurrency(budget.allocatedAmount * ((100 - budget.splitPercentage) / 100))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -66,7 +66,7 @@ function App() {
   const sampleTransactions = generateSampleData();
   
   const activeTransactions = useSampleData ? sampleTransactions : transactions;
-  const { summary, budgets, accounts, monthlyTrends, filteredTransactions } = useFinancialData(activeTransactions, savingsGoals, dateRange);
+  const { summary, budgets, accounts, monthlyTrends, filteredTransactions } = useFinancialData(activeTransactions, savingsGoals, dateRange, budgetSetup);
   const { smartBudgets, budgetAnalysis } = useSmartBudgeting(activeTransactions, savingsGoals, dateRange);
   const creditCardBalance = useCreditCardBalance(activeTransactions, budgetSetup?.lastCreditCardSettlement || null);
   const bankBalance = useBankBalance(activeTransactions, budgetSetup, dateRange);
@@ -370,6 +370,8 @@ function App() {
           <SmartRecommendations
             smartBudgets={smartBudgets}
             savingsGoals={savingsGoals}
+            manualBudgets={budgets}
+            budgetSetup={budgetSetup}
           />
         )}
 

@@ -103,6 +103,16 @@ export interface BudgetSetup {
   johnoOpeningBalance?: number;
   angelaOpeningBalance?: number;
   balanceAsOfDate?: string; // ISO date string
+  manualBudgets?: ManualBudget[];
+}
+
+export interface ManualBudget {
+  id: string;
+  category: string;
+  allocatedAmount: number;
+  assignedTo: 'self' | 'spouse' | 'shared';
+  splitPercentage?: number;
+  isActive: boolean;
 }
 
 export interface CreditCardBalance {

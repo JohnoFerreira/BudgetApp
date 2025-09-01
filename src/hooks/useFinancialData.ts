@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
-import { Transaction, Budget, Account, FinancialSummary, SavingsGoal } from '../types';
+import { Transaction, Budget, Account, FinancialSummary, SavingsGoal, BudgetSetup } from '../types';
 import { format, startOfMonth, endOfMonth, isWithinInterval, subMonths, isBefore } from 'date-fns';
 import { DateRange } from '../components/DateRangeFilter';
 
 export const useFinancialData = (
   transactions: Transaction[], 
   savingsGoals: SavingsGoal[] = [],
-  dateRange?: DateRange
+  dateRange?: DateRange,
+  budgetSetup?: BudgetSetup | null
 ) => {
   const currentDate = new Date();
   
@@ -116,22 +117,59 @@ export const useFinancialData = (
   }, [filteredTransactions, savingsGoals]);
 
   const budgets: Budget[] = useMemo(() => {
-    const categories = [
+    // Use manual budgets if available, otherwise fall back to default budgets
+    const manualBudgets = budgetSetup?.manualBudgets || [];
+    
+    // Default categories and allocations for fallback
+    const defaultCategories = [
       'Groceries', 'Electricity', 'Hair/Nails/Beauty', 'Pet Expenses', 'Eating Out', 
       'Clothing', 'Golf', 'Dischem/Clicks', 'Petrol', 'Gifts', 'Travel', 'Wine', 
       'Kids', 'House', 'Subscriptions', 'Ad Hoc'
     ];
-    const budgetAllocations = [
+    const defaultBudgetAllocations = [
       12000, 2500, 2000, 1500, 4000, 3000, 2500, 2000, 3500, 1500, 
       5000, 2000, 8000, 4000, 1500, 5000
-    ]; // Budget allocations in ZAR for each category
+    ];
+    
     const colors = [
       '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#EF4444', '#3B82F6',
       '#06B6D4', '#84CC16', '#F97316', '#EF4444', '#8B5CF6', '#DC2626',
       '#059669', '#7C3AED', '#0EA5E9', '#6B7280'
     ];
 
-    return categories.map((category, index) => {
+    // Use manual budgets if available
+    if (manualBudgets.length > 0) {
+      return manualBudgets
+        .filter(budget => budget.isActive)
+        .map((manualBudget, index) => {
+          const spent = filteredTransactions
+            .filter(t => t.category === manualBudget.category && t.type === 'expense')
+            .reduce((sum, t) => {
+              // Calculate the actual amount for this person based on assignment and split
+              if (t.assignedTo === 'shared' && t.splitPercentage) {
+                return sum + (t.amount * (t.splitPercentage / 100));
+              } else if (t.assignedTo === 'shared') {
+                return sum + (t.amount * 0.5); // Default 50/50 split
+              }
+              return sum + t.amount;
+            }, 0);
+
+          return {
+            category: manualBudget.category,
+            allocated: manualBudget.allocatedAmount,
+            spent,
+            color: colors[index % colors.length],
+            historicalAverage: historicalAverages[manualBudget.category] || 0,
+            trend: 'stable' as const,
+            recommendedAdjustment: 0,
+            confidence: 0.8,
+            assignedTo: manualBudget.assignedTo
+          };
+        });
+    }
+
+    // Fallback to default budgets
+    return defaultCategories.map((category, index) => {
       const spent = filteredTransactions
         .filter(t => t.category === category && t.type === 'expense')
         .reduce((sum, t) => {
@@ -146,7 +184,7 @@ export const useFinancialData = (
 
       return {
         category,
-        allocated: budgetAllocations[index],
+        allocated: defaultBudgetAllocations[index],
         spent,
         color: colors[index % colors.length],
         historicalAverage: historicalAverages[category] || 0,
@@ -157,7 +195,7 @@ export const useFinancialData = (
                    ['Hair/Nails/Beauty', 'Golf', 'Ad Hoc'].includes(category) ? 'self' : 'shared'
       };
     });
-  }, [filteredTransactions]);
+  }, [filteredTransactions, budgetSetup, historicalAverages]);
 
   const accounts: Account[] = useMemo(() => {
     const accountGroups = transactions.reduce((acc, transaction) => {
