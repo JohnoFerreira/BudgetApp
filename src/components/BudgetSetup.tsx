@@ -12,7 +12,6 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
   const [selfName, setSelfName] = useState(initialSetup?.selfName || '');
   const [spouseName, setSpouseName] = useState(initialSetup?.spouseName || '');
   const [defaultSplitPercentage, setDefaultSplitPercentage] = useState(initialSetup?.defaultSplitPercentage || 55);
-  const [activeTab, setActiveTab] = useState<'income' | 'expenses' | 'settings'>('income');
   const [activeTab, setActiveTab] = useState<'income' | 'expenses' | 'budgets' | 'settings'>('income');
   
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>(
