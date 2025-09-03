@@ -1,15 +1,19 @@
 import React from 'react';
 import { Brain, TrendingUp, TrendingDown, Target, Lightbulb, ArrowRight } from 'lucide-react';
-import { Budget, SavingsGoal } from '../types';
+import { Budget, SavingsGoal, BudgetSetup } from '../types';
 
 interface SmartRecommendationsProps {
   smartBudgets: Budget[];
   savingsGoals: SavingsGoal[];
+  manualBudgets: Budget[];
+  budgetSetup: BudgetSetup | null;
 }
 
 export const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({ 
   smartBudgets, 
-  savingsGoals 
+  savingsGoals,
+  manualBudgets,
+  budgetSetup
 }) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -44,6 +48,11 @@ export const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
   // Generate smart recommendations
   const recommendations = React.useMemo(() => {
     const recs = [];
+
+    // Ensure we have data to work with
+    if (!smartBudgets || smartBudgets.length === 0) {
+      return [];
+    }
 
     // Budget adjustment recommendations
     smartBudgets.forEach(budget => {
@@ -96,7 +105,7 @@ export const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
     });
 
     return recs.sort((a, b) => b.impact - a.impact).slice(0, 6);
-  }, [smartBudgets, manualBudgets]);
+  }, [smartBudgets, manualBudgets, savingsGoals]);
 
   return (
     <div className="space-y-6">
@@ -116,7 +125,7 @@ export const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
       </div>
 
       {/* Manual vs Smart Budget Comparison */}
-      {manualBudgets.length > 0 && (
+      {manualBudgets && manualBudgets.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
@@ -127,7 +136,7 @@ export const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {manualBudgets.map((manualBudget) => {
-              const smartBudget = smartBudgets.find(sb => sb.category === manualBudget.category);
+              const smartBudget = smartBudgets?.find(sb => sb.category === manualBudget.category);
               if (!smartBudget) return null;
               
               const difference = manualBudget.allocated - smartBudget.historicalAverage;
@@ -240,22 +249,29 @@ export const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
       {/* Budget Trend Summary */}
       <div className="mt-6 pt-6 border-t border-gray-200">
         <h3 className="font-medium text-gray-900 mb-4">Category Trends</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {smartBudgets.map((budget) => (
-            <div key={budget.category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-2">
-                {getTrendIcon(budget.trend)}
-                <span className="text-sm font-medium text-gray-900">{budget.category}</span>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-gray-500">6mo avg</div>
-                <div className="text-sm font-medium text-gray-900">
-                  {formatCurrency(budget.historicalAverage)}
+        {smartBudgets && smartBudgets.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {smartBudgets.map((budget) => (
+              <div key={budget.category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  {getTrendIcon(budget.trend)}
+                  <span className="text-sm font-medium text-gray-900">{budget.category}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">6mo avg</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {formatCurrency(budget.historicalAverage)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Brain className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-500">Loading spending trends...</p>
+          </div>
+        )}
       </div>
     </div>
   );
