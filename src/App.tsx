@@ -372,8 +372,6 @@ function App() {
             savingsGoals={savingsGoals}
             manualBudgets={budgets}
             budgetSetup={budgetSetup}
-            manualBudgets={budgets}
-            budgetSetup={budgetSetup}
           />
         )}
 
