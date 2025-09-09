@@ -322,6 +322,7 @@ function App() {
             summary={summary}
             budgets={budgets}
             accounts={accounts}
+            transactions={filteredTransactions}
             monthlyTrends={monthlyTrends}
             lastUpdated={lastUpdated}
             onRefresh={refetch}

@@ -1,16 +1,17 @@
 import React from 'react';
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, CreditCard, Calendar, RefreshCw, User, Users, PieChart } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, CreditCard, Calendar, RefreshCw, User, Users, PieChart, Receipt } from 'lucide-react';
 import { FinancialSummary, Budget, Account, BudgetSetup } from '../types';
 import { BudgetChart } from './BudgetChart';
 import { TrendChart } from './TrendChart';
-import { format } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { DateRange, DateRangeFilter, getDefaultDateRange } from './DateRangeFilter';
 
 interface DashboardProps {
   summary: FinancialSummary;
   budgets: Budget[];
   accounts: Account[];
+  transactions: any[];
   monthlyTrends: Array<{
     month: string;
     income: number;
@@ -29,6 +30,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   summary,
   budgets,
   accounts,
+  transactions,
   monthlyTrends,
   lastUpdated,
   onRefresh,
@@ -46,6 +48,75 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }).format(amount);
   };
 
+  // Calculate top spending descriptions
+  const getTopSpendingDescriptions = () => {
+    if (!transactions || transactions.length === 0) return [];
+
+    const currentDate = new Date();
+    const filterStart = dateRange ? new Date(dateRange.startDate) : new Date();
+    const filterEnd = dateRange ? new Date(dateRange.endDate) : new Date();
+
+    // Get current pay cycle transactions
+    const currentTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return t.type === 'expense' && isWithinInterval(transactionDate, { start: filterStart, end: filterEnd });
+    });
+
+    // Get last 6 months transactions
+    const sixMonthsAgo = subMonths(currentDate, 6);
+    const historicalTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return t.type === 'expense' && transactionDate >= sixMonthsAgo;
+    });
+
+    // Group by description for current period
+    const currentSpending = currentTransactions.reduce((acc, t) => {
+      const description = t.description || 'Unknown';
+      if (!acc[description]) acc[description] = 0;
+      
+      // Calculate actual amount based on assignment
+      let amount = t.amount;
+      if (t.assignedTo === 'shared' && t.splitPercentage) {
+        amount = t.amount * (t.splitPercentage / 100);
+      } else if (t.assignedTo === 'shared') {
+        amount = t.amount * 0.55; // Default split
+      }
+      
+      acc[description] += amount;
+      return acc;
+    }, {});
+
+    // Group by description for historical period (6 months average)
+    const historicalSpending = historicalTransactions.reduce((acc, t) => {
+      const description = t.description || 'Unknown';
+      if (!acc[description]) acc[description] = 0;
+      
+      // Calculate actual amount based on assignment
+      let amount = t.amount;
+      if (t.assignedTo === 'shared' && t.splitPercentage) {
+        amount = t.amount * (t.splitPercentage / 100);
+      } else if (t.assignedTo === 'shared') {
+        amount = t.amount * 0.55; // Default split
+      }
+      
+      acc[description] += amount;
+      return acc;
+    }, {});
+
+    // Convert to array and calculate 6-month average
+    const spendingData = Object.keys(currentSpending).map(description => ({
+      description,
+      currentAmount: currentSpending[description],
+      historicalAverage: (historicalSpending[description] || 0) / 6 // 6 month average
+    }));
+
+    // Sort by current amount and take top 6
+    return spendingData
+      .sort((a, b) => b.currentAmount - a.currentAmount)
+      .slice(0, 6);
+  };
+
+  const topSpendingDescriptions = getTopSpendingDescriptions();
   const budgetUsagePercentage = (summary.budgetUsed / summary.totalBudget) * 100;
 
   // Calculate individual summaries based on budget setup
@@ -433,6 +504,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Accounts & Shared Budget Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Spending Descriptions */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <Receipt className="h-5 w-5 text-orange-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Top Spending Descriptions</h2>
+          </div>
+          <div className="space-y-4">
+            {topSpendingDescriptions.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No spending data available</p>
+            ) : (
+              topSpendingDescriptions.map((item, index) => (
+                <div key={item.description} className="flex items-center justify-between p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-center w-8 h-8 bg-orange-200 text-orange-800 rounded-full text-sm font-bold">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{item.description}</p>
+                      <p className="text-xs text-gray-500">Merchant/Description</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-orange-600">{formatCurrency(item.currentAmount)}</p>
+                    <p className="text-xs text-gray-500">
+                      6mo avg: {formatCurrency(item.historicalAverage)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         {/* Accounts */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Account Balances</h2>
