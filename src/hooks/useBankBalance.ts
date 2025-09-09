@@ -172,7 +172,13 @@ export const useBankBalance = (
     }
 
     const johnoOpeningBalance = budgetSetup.johnoOpeningBalance || 0;
-    const johnoClosingBalance = johnoOpeningBalance + johnoIncome - johnoFixedExpenses - johnoCashExpenses - johnoCreditCardSettlement;
+    
+    // Calculate what the closing balance would be
+    const johnoCalculatedBalance = johnoOpeningBalance + johnoIncome - johnoFixedExpenses - johnoCashExpenses - johnoCreditCardSettlement;
+    
+    // If user wants to zero balances, adjust opening balance to make closing balance zero
+    const johnoAdjustedOpening = budgetSetup.zeroBalances ? -johnoIncome + johnoFixedExpenses + johnoCashExpenses + johnoCreditCardSettlement : johnoOpeningBalance;
+    const johnoClosingBalance = budgetSetup.zeroBalances ? 0 : johnoCalculatedBalance;
 
     // Calculate for Angela (spouse)
     const angelaTransactions = filteredTransactions.filter(t => 
@@ -216,11 +222,17 @@ export const useBankBalance = (
       }, 0);
 
     const angelaOpeningBalance = budgetSetup.angelaOpeningBalance || 0;
-    const angelaClosingBalance = angelaOpeningBalance + angelaIncome - angelaFixedExpenses - angelaCashExpenses - angelaCreditCardSettlement;
+    
+    // Calculate what the closing balance would be
+    const angelaCalculatedBalance = angelaOpeningBalance + angelaIncome - angelaFixedExpenses - angelaCashExpenses - angelaCreditCardSettlement;
+    
+    // If user wants to zero balances, adjust opening balance to make closing balance zero
+    const angelaAdjustedOpening = budgetSetup.zeroBalances ? -angelaIncome + angelaFixedExpenses + angelaCashExpenses + angelaCreditCardSettlement : angelaOpeningBalance;
+    const angelaClosingBalance = budgetSetup.zeroBalances ? 0 : angelaCalculatedBalance;
 
     return {
       johno: {
-        openingBalance: johnoOpeningBalance,
+        openingBalance: johnoAdjustedOpening,
         totalIncome: johnoIncome,
         fixedExpenses: johnoFixedExpenses,
         cashExpenses: johnoCashExpenses,
@@ -229,7 +241,7 @@ export const useBankBalance = (
         transactions: johnoTransactions
       },
       angela: {
-        openingBalance: angelaOpeningBalance,
+        openingBalance: angelaAdjustedOpening,
         totalIncome: angelaIncome,
         fixedExpenses: angelaFixedExpenses,
         cashExpenses: angelaCashExpenses,

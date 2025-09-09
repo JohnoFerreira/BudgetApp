@@ -123,13 +123,25 @@ function App() {
         ...budgetSetup,
         johnoOpeningBalance: johnoBalance,
         angelaOpeningBalance: angelaBalance,
-        balanceAsOfDate: new Date().toISOString()
+        balanceAsOfDate: new Date().toISOString(),
+        zeroBalances: false
       };
       setBudgetSetup(updatedSetup);
       localStorage.setItem('budgetSetup', JSON.stringify(updatedSetup));
     }
   };
 
+  const handleZeroBalances = () => {
+    if (budgetSetup && confirm('This will zero out your bank balances. You can then enter your current actual balances. Continue?')) {
+      const updatedSetup = {
+        ...budgetSetup,
+        zeroBalances: true,
+        balanceAsOfDate: new Date().toISOString()
+      };
+      setBudgetSetup(updatedSetup);
+      localStorage.setItem('budgetSetup', JSON.stringify(updatedSetup));
+    }
+  };
   const handleSavingsGoalsSave = (goals: SavingsGoal[]) => {
     setSavingsGoals(goals);
     localStorage.setItem('savingsGoals', JSON.stringify(goals));
@@ -388,6 +400,7 @@ function App() {
             bankBalance={bankBalance}
             budgetSetup={budgetSetup}
             onUpdateOpeningBalances={handleUpdateOpeningBalances}
+            onZeroBalances={handleZeroBalances}
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
           />

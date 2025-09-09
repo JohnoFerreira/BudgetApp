@@ -9,6 +9,7 @@ interface BankBalanceOverviewProps {
   bankBalance: BankBalanceData;
   budgetSetup: BudgetSetup;
   onUpdateOpeningBalances: (johnoBalance: number, angelaBalance: number) => void;
+  onZeroBalances: () => void;
   dateRange?: DateRange;
   onDateRangeChange?: (range: DateRange) => void;
 }
@@ -17,6 +18,7 @@ export const BankBalanceOverview: React.FC<BankBalanceOverviewProps> = ({
   bankBalance,
   budgetSetup,
   onUpdateOpeningBalances,
+  onZeroBalances,
   dateRange = getDefaultDateRange(),
   onDateRangeChange
 }) => {
@@ -73,6 +75,13 @@ export const BankBalanceOverview: React.FC<BankBalanceOverviewProps> = ({
             {onDateRangeChange && (
               <DateRangeFilter selectedRange={dateRange} onRangeChange={onDateRangeChange} />
             )}
+            <button
+              onClick={onZeroBalances}
+              className="inline-flex items-center px-4 py-2 border border-amber-300 rounded-lg shadow-sm text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200"
+            >
+              <DollarSign className="h-4 w-4 mr-2" />
+              Zero Balances
+            </button>
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}

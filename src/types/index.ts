@@ -103,6 +103,7 @@ export interface BudgetSetup {
   johnoOpeningBalance?: number;
   angelaOpeningBalance?: number;
   balanceAsOfDate?: string; // ISO date string
+  zeroBalances?: boolean;
   manualBudgets?: ManualBudget[];
 }
 
