@@ -540,6 +540,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               ))
             )}
+            {/* Debug info for troubleshooting */}
+            <div className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">
+              {transactions.length} transactions loaded
+            </div>
           </div>
         </div>
 

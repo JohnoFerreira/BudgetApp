@@ -6,6 +6,7 @@ export const useGoogleSheets = (config: GoogleSheetsConfig | null) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   const fetchData = useCallback(async () => {
     if (!config) return;
@@ -24,17 +25,47 @@ export const useGoogleSheets = (config: GoogleSheetsConfig | null) => {
       const data = await response.json();
       const rows = data.values || [];
 
-      // Log the first few rows to help debug
-      console.log('Google Sheets data (first 3 rows):', rows.slice(0, 3));
+      // Enhanced debugging
+      console.log('=== GOOGLE SHEETS DEBUG INFO ===');
+      console.log('Total rows fetched:', rows.length);
+      console.log('First 3 rows:', rows.slice(0, 3));
+      console.log('Last 3 rows:', rows.slice(-3));
+      console.log('Range used:', config.range);
+      console.log('Spreadsheet ID:', config.spreadsheetId);
+      
+      // Check for dates after September 29th
+      const datesAfterSept29 = rows.slice(1).filter((row: string[]) => {
+        if (!row[0]) return false;
+        const dateStr = row[0].trim();
+        const date = new Date(dateStr);
+        const sept29 = new Date('2024-09-29');
+        return date > sept29;
+      });
+      console.log('Rows with dates after Sept 29, 2024:', datesAfterSept29.length);
+      console.log('Sample rows after Sept 29:', datesAfterSept29.slice(0, 5));
+      
+      setDebugInfo({
+        totalRows: rows.length,
+        firstRows: rows.slice(0, 3),
+        lastRows: rows.slice(-3),
+        datesAfterSept29: datesAfterSept29.length,
+        sampleAfterSept29: datesAfterSept29.slice(0, 5)
+      });
+
       // Skip header row and parse data
       // Expected columns: Date | Description | Person | Category | Combined/Personal | Amount | ... | Johno Amount | Angela Amount | ... | Payment Method
       // Updated columns: Date | Description | Person | Category | Combined/Personal | Amount | Payment Method | (skip) | Johno Amount | Angela Amount
       const parsedTransactions: Transaction[] = rows.slice(1)
         .filter((row: string[]) => row.length > 0 && row[0]) // Filter out empty rows
         .map((row: string[], index: number) => {
-        // Log each row being processed
-        if (index < 5) {
-          console.log(`Processing row ${index + 1}:`, row);
+        // Enhanced row processing logging
+        const dateStr = row[0]?.trim() || '';
+        const date = new Date(dateStr);
+        const sept29 = new Date('2024-09-29');
+        
+        if (date > sept29 && index < 10) {
+          console.log(`Processing row ${index + 1} (after Sept 29):`, row);
+          console.log(`Date parsed as:`, date);
         }
         
         const totalAmount = parseFloat(row[5]) || 0;
@@ -56,7 +87,7 @@ export const useGoogleSheets = (config: GoogleSheetsConfig | null) => {
 
         return {
           id: `${index}`,
-          date: row[0]?.trim() || '',
+          date: dateStr,
           description: row[1]?.trim() || '',
           amount: absoluteAmount,
           category: row[3]?.trim() || 'Other',
@@ -71,7 +102,21 @@ export const useGoogleSheets = (config: GoogleSheetsConfig | null) => {
       })
       .filter(transaction => transaction.date && transaction.description); // Filter out invalid transactions
 
-      console.log('Parsed transactions (first 3):', parsedTransactions.slice(0, 3));
+      // Enhanced transaction debugging
+      console.log('Total parsed transactions:', parsedTransactions.length);
+      console.log('First 3 parsed transactions:', parsedTransactions.slice(0, 3));
+      console.log('Last 3 parsed transactions:', parsedTransactions.slice(-3));
+      
+      // Check parsed transactions after Sept 29
+      const transactionsAfterSept29 = parsedTransactions.filter(t => {
+        const date = new Date(t.date);
+        const sept29 = new Date('2024-09-29');
+        return date > sept29;
+      });
+      console.log('Parsed transactions after Sept 29:', transactionsAfterSept29.length);
+      console.log('Sample transactions after Sept 29:', transactionsAfterSept29.slice(0, 5));
+      console.log('=== END DEBUG INFO ===');
+      
       setTransactions(parsedTransactions);
       setLastUpdated(new Date());
     } catch (err) {
@@ -95,6 +140,7 @@ export const useGoogleSheets = (config: GoogleSheetsConfig | null) => {
     loading,
     error,
     lastUpdated,
-    refetch: fetchData
+    refetch: fetchData,
+    debugInfo
   };
 };
