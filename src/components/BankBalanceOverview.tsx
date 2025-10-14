@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown, DollarSign, Edit3, Save, X, Calendar, CreditCard } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, DollarSign, CreditCard as Edit3, Save, X, Calendar, CreditCard } from 'lucide-react';
 import { BankBalanceData } from '../hooks/useBankBalance';
 import { BudgetSetup } from '../types';
 import { DateRange, DateRangeFilter, getDefaultDateRange } from './DateRangeFilter';
@@ -24,7 +24,7 @@ export const BankBalanceOverview: React.FC<BankBalanceOverviewProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [johnoBalance, setJohnoBalance] = useState(budgetSetup.johnoOpeningBalance || 0);
-  const [angelaBalance, setAngelaBalance] = useState(budgetSetup?.angelaOpeningBalance || 0);
+  const [angelaBalance, setAngelaBalance] = useState(budgetSetup.angelaOpeningBalance || 0);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -40,7 +40,7 @@ export const BankBalanceOverview: React.FC<BankBalanceOverviewProps> = ({
 
   const handleCancel = () => {
     setJohnoBalance(budgetSetup.johnoOpeningBalance || 0);
-    setAngelaBalance(budgetSetup?.angelaOpeningBalance || 0);
+    setAngelaBalance(budgetSetup.angelaOpeningBalance || 0);
     setIsEditing(false);
   };
 
