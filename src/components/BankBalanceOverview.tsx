@@ -24,7 +24,7 @@ export const BankBalanceOverview: React.FC<BankBalanceOverviewProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [johnoBalance, setJohnoBalance] = useState(budgetSetup.johnoOpeningBalance || 0);
-  const [angelaBalance, setAngelaBalance] = useState(budgetSetup.angelaOpeningBalance || 0);
+  const [angelaBalance, setAngelaBalance] = useState(budgetSetup?.angelaOpeningBalance || 0);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -40,7 +40,7 @@ export const BankBalanceOverview: React.FC<BankBalanceOverviewProps> = ({
 
   const handleCancel = () => {
     setJohnoBalance(budgetSetup.johnoOpeningBalance || 0);
-    setAngelaBalance(budgetSetup.angelaOpeningBalance || 0);
+    setAngelaBalance(budgetSetup?.angelaOpeningBalance || 0);
     setIsEditing(false);
   };
 

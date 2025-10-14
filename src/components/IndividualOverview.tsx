@@ -88,7 +88,8 @@ export const IndividualOverview: React.FC<IndividualOverviewProps> = ({
         const yourShare = person === 'self' ? t.splitPercentage : (100 - t.splitPercentage);
         return sum + (t.amount * (yourShare / 100));
       } else if (t.assignedTo === 'shared') {
-        const yourShare = person === 'self' ? budgetSetup.defaultSplitPercentage : (100 - budgetSetup.defaultSplitPercentage);
+        const defaultSplit = budgetSetup?.defaultSplitPercentage || 55;
+        const yourShare = person === 'self' ? defaultSplit : (100 - defaultSplit);
         return sum + (t.amount * (yourShare / 100));
       }
       return sum + t.amount;
