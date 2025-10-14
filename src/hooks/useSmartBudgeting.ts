@@ -62,7 +62,8 @@ export const useSmartBudgeting = (
             if (t.assignedTo === 'shared' && t.splitPercentage) {
               return sum + (t.amount * (t.splitPercentage / 100));
             } else if (t.assignedTo === 'shared') {
-              return sum + (t.amount * 0.55); // Default 55% for Johno
+              const defaultSplit = 55; // Default split percentage
+              return sum + (t.amount * (defaultSplit / 100));
             }
             return sum + t.amount;
           }, 0);
@@ -108,7 +109,8 @@ export const useSmartBudgeting = (
           if (t.assignedTo === 'shared' && t.splitPercentage) {
             return sum + (t.amount * (t.splitPercentage / 100));
           } else if (t.assignedTo === 'shared') {
-            return sum + (t.amount * 0.5); // Default 50/50 split
+            const defaultSplit = 55; // Default split percentage
+            return sum + (t.amount * (defaultSplit / 100));
           }
           return sum + t.amount;
         }, 0);

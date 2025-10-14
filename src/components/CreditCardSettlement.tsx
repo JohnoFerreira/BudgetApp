@@ -1,6 +1,7 @@
 import React from 'react';
-import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
+import { CreditCard, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import { CreditCardBalance } from '../types';
+import { format } from 'date-fns';
 
 interface CreditCardSettlementProps {
   creditCardBalance: CreditCardBalance;
@@ -19,12 +20,14 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
   };
 
   const handleMarkAsSettled = () => {
-    onSettlement();
+    if (confirm('Mark all credit card expenses as settled? This will reset the balance to zero.')) {
+      onSettlement();
+    }
   };
 
   const isSettled = creditCardBalance.totalOutstanding === 0;
   const lastSettlementDate = creditCardBalance.lastSettlementDate 
-    ? new Date(creditCardBalance.lastSettlementDate).toLocaleDateString()
+    ? format(new Date(creditCardBalance.lastSettlementDate), 'MMM d, yyyy \'at\' h:mm a')
     : 'Never';
 
   return (
@@ -86,7 +89,10 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Settlement Status</h2>
-            <p className="text-gray-600">Last settlement: {lastSettlementDate}</p>
+            <div className="flex items-center space-x-2 mt-1">
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <p className="text-gray-600">Last settlement: {lastSettlementDate}</p>
+            </div>
           </div>
           {isSettled ? (
             <div className="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
@@ -116,7 +122,7 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
               onClick={handleMarkAsSettled}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
             >
-              Mark as Settled
+              Mark as Settled ({format(new Date(), 'MMM d, yyyy')})
             </button>
           </div>
         )}
@@ -136,7 +142,7 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
                   <div>
                     <p className="font-medium text-gray-900">{transaction.description}</p>
                     <p className="text-sm text-gray-600">
-                      {transaction.category} • {new Date(transaction.date).toLocaleDateString()}
+                      {transaction.category} • {format(new Date(transaction.date), 'MMM d, yyyy')}
                       {transaction.assignedTo === 'shared' && ` • Shared (${transaction.splitPercentage || 55}% Johno)`}
                       {transaction.assignedTo === 'self' && ' • Johno'}
                       {transaction.assignedTo === 'spouse' && ' • Angela'}

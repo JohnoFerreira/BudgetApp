@@ -52,7 +52,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const getTopSpendingDescriptions = () => {
     if (!transactions || transactions.length === 0) return [];
 
-    const currentDate = new Date();
     const filterStart = dateRange ? new Date(dateRange.startDate) : new Date();
     const filterEnd = dateRange ? new Date(dateRange.endDate) : new Date();
 
@@ -63,6 +62,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
 
     // Get last 6 months transactions
+    const currentDate = new Date();
     const sixMonthsAgo = subMonths(currentDate, 6);
     const historicalTransactions = transactions.filter(t => {
       const transactionDate = new Date(t.date);
@@ -72,36 +72,42 @@ export const Dashboard: React.FC<DashboardProps> = ({
     // Group by description for current period
     const currentSpending = currentTransactions.reduce((acc, t) => {
       const description = t.description || 'Unknown';
-      if (!acc[description]) acc[description] = 0;
+      if (!acc[description]) {
+        acc[description] = 0;
+      }
       
       // Calculate actual amount based on assignment
       let amount = t.amount;
       if (t.assignedTo === 'shared' && t.splitPercentage) {
         amount = t.amount * (t.splitPercentage / 100);
       } else if (t.assignedTo === 'shared') {
-        amount = t.amount * 0.55; // Default split
+        const defaultSplit = budgetSetup?.defaultSplitPercentage || 55;
+        amount = t.amount * (defaultSplit / 100);
       }
       
       acc[description] += amount;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     // Group by description for historical period (6 months average)
     const historicalSpending = historicalTransactions.reduce((acc, t) => {
       const description = t.description || 'Unknown';
-      if (!acc[description]) acc[description] = 0;
+      if (!acc[description]) {
+        acc[description] = 0;
+      }
       
       // Calculate actual amount based on assignment
       let amount = t.amount;
       if (t.assignedTo === 'shared' && t.splitPercentage) {
         amount = t.amount * (t.splitPercentage / 100);
       } else if (t.assignedTo === 'shared') {
-        amount = t.amount * 0.55; // Default split
+        const defaultSplit = budgetSetup?.defaultSplitPercentage || 55;
+        amount = t.amount * (defaultSplit / 100);
       }
       
       acc[description] += amount;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
     // Convert to array and calculate 6-month average
     const spendingData = Object.keys(currentSpending).map(description => ({
