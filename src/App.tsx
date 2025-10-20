@@ -47,6 +47,7 @@ function App() {
   const [isApiLocked, setIsApiLocked] = useState(() => {
     return localStorage.getItem('apiLocked') === 'true';
   });
+  const [showApiUpdate, setShowApiUpdate] = useState(false);
   
   // Load config and budget setup from localStorage
   useEffect(() => {
@@ -103,7 +104,10 @@ function App() {
     { id: 'settlement', label: 'Credit Card', icon: CreditCard, color: 'text-red-600' },
     { id: 'balances', label: 'Bank Balances', icon: Wallet, color: 'text-emerald-600' },
     { id: 'goals', label: 'Savings Goals', icon: Target, color: 'text-orange-600' },
-    { id: 'setup', label: 'Budget Setup', icon: Settings, color: 'text-gray-600' }
+    { id: 'setup', label: 'Budget Setup', icon: Settings, color: 'text-gray-600' },
+    ...(config ? [
+      { id: 'api-update', label: 'Update API', icon: RefreshCw, color: 'text-indigo-600' }
+    ] : [])
   ];
 
   const handleCreditCardSettlement = () => {
@@ -150,6 +154,26 @@ function App() {
   const handleUseSampleData = () => {
     setUseSampleData(true);
   };
+
+  // Show API update screen
+  if (showApiUpdate || activeTab === 'api-update') {
+    return (
+      <GoogleSheetsSetup 
+        onConfigSave={(newConfig) => {
+          handleConfigSave(newConfig);
+          setShowApiUpdate(false);
+          setActiveTab('dashboard');
+        }}
+        existingConfig={config}
+        isLocked={isApiLocked}
+        onUnlock={handleApiUnlock}
+        preserveData={true}
+        onFullDataImport={() => {
+          window.location.reload();
+        }}
+      />
+    );
+  }
 
   // Show budget setup if no setup exists
   if (!budgetSetup && activeTab === 'setup') {
@@ -304,6 +328,16 @@ function App() {
               <X className="h-5 w-5 text-red-400 group-hover:text-red-600" />
               <span className="font-medium">Reset All Data</span>
             </button>
+            
+            {config && (
+              <button
+                onClick={() => setActiveTab('api-update')}
+                className="w-full flex items-center space-x-3 px-4 py-3 text-left rounded-xl text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 group"
+              >
+                <RefreshCw className="h-5 w-5 text-indigo-400 group-hover:text-indigo-600" />
+                <span className="font-medium">Update API Settings</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

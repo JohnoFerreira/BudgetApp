@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sheet, Key, Database, AlertCircle, Download, Upload, Copy, Check, Settings } from 'lucide-react';
+import { Sheet, Key, Database, AlertCircle, Download, Upload, Copy, Check, Settings, CheckCircle } from 'lucide-react';
 import { GoogleSheetsConfig } from '../types';
 
 interface GoogleSheetsSetupProps {
@@ -8,6 +8,7 @@ interface GoogleSheetsSetupProps {
   onFullDataImport?: (data: any) => void;
   isLocked?: boolean;
   onUnlock?: () => void;
+  preserveData?: boolean;
 }
 
 export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({ 
@@ -15,7 +16,8 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({
   existingConfig, 
   onFullDataImport,
   isLocked = false,
-  onUnlock
+  onUnlock,
+  preserveData = false
 }) => {
   const [spreadsheetId, setSpreadsheetId] = useState(existingConfig?.spreadsheetId || '');
   const [apiKey, setApiKey] = useState(isLocked ? '••••••••••••••••' : (existingConfig?.apiKey || ''));
@@ -172,6 +174,21 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+        {/* Data Preservation Notice */}
+        {preserveData && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="p-1 bg-green-100 rounded">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-green-900">Safe Update Mode</p>
+                <p className="text-xs text-green-800">Your budget setup and savings goals will be preserved</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Lock Status Indicator */}
         {isLocked && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
@@ -231,9 +248,11 @@ export const GoogleSheetsSetup: React.FC<GoogleSheetsSetupProps> = ({
             <Sheet className="h-8 w-8 text-blue-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {existingConfig ? 'Update Google Sheets' : 'Connect Google Sheets'}
+            {existingConfig ? (preserveData ? 'Update API Settings' : 'Update Google Sheets') : 'Connect Google Sheets'}
           </h1>
-          <p className="text-gray-600 mt-2">Link your spreadsheet to start tracking your finances</p>
+          <p className="text-gray-600 mt-2">
+            {preserveData ? 'Update your API configuration safely' : 'Link your spreadsheet to start tracking your finances'}
+          </p>
         </div>
 
         {/* Export/Import Buttons - Split into API and Full Data */}
