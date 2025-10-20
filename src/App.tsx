@@ -95,7 +95,7 @@ function App() {
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, color: 'text-blue-600' },
-    ...(budgetSetup && budgetSetup.selfName ? [
+    ...(budgetSetup?.selfName ? [
       { id: 'self', label: budgetSetup.selfName, icon: User, color: 'text-blue-600' },
       { id: 'spouse', label: budgetSetup.spouseName || 'Spouse', icon: User, color: 'text-purple-600' }
     ] : []),
@@ -105,9 +105,7 @@ function App() {
     { id: 'balances', label: 'Bank Balances', icon: Wallet, color: 'text-emerald-600' },
     { id: 'goals', label: 'Savings Goals', icon: Target, color: 'text-orange-600' },
     { id: 'setup', label: 'Budget Setup', icon: Settings, color: 'text-gray-600' },
-    ...(config ? [
-      { id: 'api-update', label: 'Update API', icon: RefreshCw, color: 'text-indigo-600' }
-    ] : [])
+    { id: 'api-update', label: 'Update API', icon: RefreshCw, color: 'text-indigo-600' }
   ];
 
   const handleCreditCardSettlement = () => {
