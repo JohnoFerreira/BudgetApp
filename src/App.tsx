@@ -94,9 +94,9 @@ function App() {
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, color: 'text-blue-600' },
-    ...(budgetSetup ? [
+    ...(budgetSetup && budgetSetup.selfName ? [
       { id: 'self', label: budgetSetup.selfName, icon: User, color: 'text-blue-600' },
-      { id: 'spouse', label: budgetSetup.spouseName, icon: User, color: 'text-purple-600' }
+      { id: 'spouse', label: budgetSetup.spouseName || 'Spouse', icon: User, color: 'text-purple-600' }
     ] : []),
     { id: 'analysis', label: 'Budget Analysis', icon: BarChart3, color: 'text-green-600' },
     { id: 'recommendations', label: 'Smart Insights', icon: Brain, color: 'text-purple-600' },
