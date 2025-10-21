@@ -27,7 +27,7 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
 
   const isSettled = creditCardBalance.totalOutstanding === 0;
   const lastSettlementDate = creditCardBalance.lastSettlementDate 
-    ? format(new Date(creditCardBalance.lastSettlementDate), 'MMM d, yyyy \'at\' h:mm a')
+    ? format(new Date(creditCardBalance.lastSettlementDate), 'MMM d, yyyy')
     : 'Never';
 
   return (
@@ -57,6 +57,12 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
             {formatCurrency(creditCardBalance.johnoOwes)}
           </div>
           <p className="text-sm text-gray-600">Personal + shared expenses</p>
+          <div className="mt-2 text-xs text-gray-500">
+            {creditCardBalance.transactionsSinceSettlement.filter(t => 
+              t.assignedTo === 'self' || 
+              (t.assignedTo === 'shared' && (t.splitPercentage || 55) > 50)
+            ).length} transactions
+          </div>
         </div>
 
         {/* Angela's Balance */}
@@ -69,6 +75,12 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
             {formatCurrency(creditCardBalance.angelaOwes)}
           </div>
           <p className="text-sm text-gray-600">Personal + shared expenses</p>
+          <div className="mt-2 text-xs text-gray-500">
+            {creditCardBalance.transactionsSinceSettlement.filter(t => 
+              t.assignedTo === 'spouse' || 
+              (t.assignedTo === 'shared' && (t.splitPercentage || 55) <= 50)
+            ).length} transactions
+          </div>
         </div>
 
         {/* Total Outstanding */}
@@ -81,6 +93,9 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
             {formatCurrency(creditCardBalance.totalOutstanding)}
           </div>
           <p className="text-sm text-gray-600">Combined credit card balance</p>
+          <div className="mt-2 text-xs text-gray-500">
+            {creditCardBalance.transactionsSinceSettlement.length} total transactions
+          </div>
         </div>
       </div>
 

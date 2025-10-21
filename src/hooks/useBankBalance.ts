@@ -111,6 +111,7 @@ export const useBankBalance = (
 
     // Johno's fixed expenses (personal + share of shared)
     const johnoFixedExpenses = budgetSetup.fixedExpenses
+     .filter(expense => expense.isActive)
       .filter(expense => expense.isActive)
       .reduce((sum, expense) => {
         const monthlyAmount = calculateMonthlyAmount(expense.amount, expense.frequency);
@@ -127,7 +128,9 @@ export const useBankBalance = (
     const johnoCashExpenses = filteredTransactions
       .filter(t => 
         t.type === 'expense' && 
-        t.paymentMethod !== 'credit_card' &&
+        t.paymentMethod !== 'credit_card' && 
+        !t.account?.toLowerCase().includes('credit') &&
+        !t.description?.toLowerCase().includes('credit') &&
         (t.assignedTo === 'self' || t.assignedTo === 'shared')
       )
       .reduce((sum, t) => {
@@ -152,7 +155,9 @@ export const useBankBalance = (
           const transactionDate = new Date(transaction.date);
           return transactionDate <= settlementDate && 
                  transaction.type === 'expense' && 
-                 transaction.paymentMethod === 'credit_card';
+                 (transaction.paymentMethod === 'credit_card' ||
+                  transaction.account?.toLowerCase().includes('credit') ||
+                  transaction.description?.toLowerCase().includes('credit'));
         });
 
         settlementTransactions.forEach(transaction => {
@@ -191,6 +196,7 @@ export const useBankBalance = (
 
     // Angela's fixed expenses (personal + share of shared)
     const angelaFixedExpenses = budgetSetup.fixedExpenses
+     .filter(expense => expense.isActive)
       .filter(expense => expense.isActive)
       .reduce((sum, expense) => {
         const monthlyAmount = calculateMonthlyAmount(expense.amount, expense.frequency);
@@ -207,7 +213,9 @@ export const useBankBalance = (
     const angelaCashExpenses = filteredTransactions
       .filter(t => 
         t.type === 'expense' && 
-        t.paymentMethod !== 'credit_card' &&
+        t.paymentMethod !== 'credit_card' && 
+        !t.account?.toLowerCase().includes('credit') &&
+        !t.description?.toLowerCase().includes('credit') &&
         (t.assignedTo === 'spouse' || t.assignedTo === 'shared')
       )
       .reduce((sum, t) => {
@@ -255,7 +263,7 @@ export const useBankBalance = (
         totalExpenses: johnoFixedExpenses + angelaFixedExpenses + johnoCashExpenses + angelaCashExpenses + johnoCreditCardSettlement + angelaCreditCardSettlement
       }
     };
-  }, [transactions, budgetSetup, dateRange, creditCardBalance]);
+  }, [transactions, budgetSetup, dateRange]);
 
   return bankBalance;
 };

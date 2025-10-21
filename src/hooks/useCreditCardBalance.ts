@@ -14,7 +14,9 @@ export const useCreditCardBalance = (
       const transactionDate = new Date(transaction.date);
       return transactionDate > settlementDate && 
              transaction.type === 'expense' && 
-             transaction.paymentMethod === 'credit_card';
+             (transaction.paymentMethod === 'credit_card' || 
+              transaction.account?.toLowerCase().includes('credit') ||
+              transaction.description?.toLowerCase().includes('credit'));
     });
 
     // Calculate what each person owes
