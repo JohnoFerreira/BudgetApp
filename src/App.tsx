@@ -116,6 +116,12 @@ function App() {
       };
       setBudgetSetup(updatedSetup);
       localStorage.setItem('budgetSetup', JSON.stringify(updatedSetup));
+      
+      // Force a re-render by updating the state
+      setActiveTab('settlement');
+      
+      // Show success message
+      alert('Credit card settlement marked as complete!');
     }
   };
 

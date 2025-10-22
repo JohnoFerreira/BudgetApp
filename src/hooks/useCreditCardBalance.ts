@@ -8,16 +8,27 @@ export const useCreditCardBalance = (
   
   const creditCardBalance = useMemo(() => {
     // Filter transactions since last settlement
-    const settlementDate = lastSettlementDate ? new Date(lastSettlementDate) : new Date('1900-01-01');
+    const settlementDate = lastSettlementDate ? new Date(lastSettlementDate) : new Date('2000-01-01');
+    
+    console.log('Credit Card Debug:', {
+      lastSettlementDate,
+      settlementDate: settlementDate.toISOString(),
+      totalTransactions: transactions.length
+    });
     
     const transactionsSinceSettlement = transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
-      return transactionDate > settlementDate && 
+      const isAfterSettlement = transactionDate > settlementDate;
+      const isCreditCard = transaction.type === 'expense' && 
              transaction.type === 'expense' && 
              (transaction.paymentMethod === 'credit_card' || 
               transaction.account?.toLowerCase().includes('credit') ||
               transaction.description?.toLowerCase().includes('credit'));
+      
+      return isAfterSettlement && isCreditCard;
     });
+    
+    console.log('Transactions since settlement:', transactionsSinceSettlement.length);
 
     // Calculate what each person owes
     let johnoOwes = 0;
@@ -38,6 +49,12 @@ export const useCreditCardBalance = (
         johnoOwes += (transaction.amount * johnoShare) / 100;
         angelaOwes += (transaction.amount * angelaShare) / 100;
       }
+    });
+    
+    console.log('Credit card balances:', {
+      johnoOwes: Math.round(johnoOwes * 100) / 100,
+      angelaOwes: Math.round(angelaOwes * 100) / 100,
+      total: Math.round((johnoOwes + angelaOwes) * 100) / 100
     });
 
     return {
