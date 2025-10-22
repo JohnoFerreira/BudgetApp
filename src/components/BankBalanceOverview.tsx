@@ -22,6 +22,17 @@ export const BankBalanceOverview: React.FC<BankBalanceOverviewProps> = ({
   dateRange = getDefaultDateRange(),
   onDateRangeChange
 }) => {
+  // Add error boundary and loading state
+  if (!bankBalance || !budgetSetup) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Bank Balances...</h2>
+        <p className="text-gray-600">Please wait while we calculate your balances.</p>
+      </div>
+    );
+  }
+
   const [isEditing, setIsEditing] = useState(false);
   const [johnoBalance, setJohnoBalance] = useState(budgetSetup.johnoOpeningBalance || 0);
   const [angelaBalance, setAngelaBalance] = useState(budgetSetup.angelaOpeningBalance || 0);

@@ -29,11 +29,14 @@ export const useBankBalance = (
   budgetSetup: BudgetSetup | null,
   dateRange?: DateRange
 ): BankBalanceData => {
-  // Get credit card balance data to calculate settlements
-  const creditCardBalance = useCreditCardBalance(transactions, budgetSetup?.lastCreditCardSettlement || null);
-  
   const bankBalance = useMemo(() => {
+    console.log('=== BANK BALANCE DEBUG ===');
+    console.log('Transactions:', transactions.length);
+    console.log('Budget Setup:', !!budgetSetup);
+    console.log('Date Range:', dateRange);
+    
     if (!budgetSetup) {
+      console.log('No budget setup - returning empty data');
       return {
         johno: {
           openingBalance: 0,
@@ -84,11 +87,15 @@ export const useBankBalance = (
     const filterStart = dateRange ? new Date(dateRange.startDate) : getPayCycleStart(currentDate);
     const filterEnd = dateRange ? new Date(dateRange.endDate) : getPayCycleEnd(getPayCycleStart(currentDate));
 
+    console.log('Filter dates:', { filterStart, filterEnd });
+
     // Filter transactions for the selected period
     const filteredTransactions = transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
       return isWithinInterval(transactionDate, { start: filterStart, end: filterEnd });
     });
+
+    console.log('Filtered transactions:', filteredTransactions.length);
 
     // Calculate monthly amounts for fixed expenses
     const calculateMonthlyAmount = (amount: number, frequency: string) => {
@@ -105,6 +112,8 @@ export const useBankBalance = (
       t.assignedTo === 'self' || (t.assignedTo === 'shared' && t.type === 'expense')
     );
 
+    console.log('Johno transactions:', johnoTransactions.length);
+
     const johnoIncome = filteredTransactions
       .filter(t => t.type === 'income' && t.assignedTo === 'self')
       .reduce((sum, t) => sum + t.amount, 0);
@@ -112,7 +121,6 @@ export const useBankBalance = (
     // Johno's fixed expenses (personal + share of shared)
     const johnoFixedExpenses = budgetSetup.fixedExpenses
      .filter(expense => expense.isActive)
-      .filter(expense => expense.isActive)
       .reduce((sum, expense) => {
         const monthlyAmount = calculateMonthlyAmount(expense.amount, expense.frequency);
         if (expense.assignedTo === 'self') {
@@ -123,6 +131,8 @@ export const useBankBalance = (
         }
         return sum;
       }, 0);
+
+    console.log('Johno fixed expenses:', johnoFixedExpenses);
 
     // Johno's cash expenses (excluding credit card)
     const johnoCashExpenses = filteredTransactions
@@ -141,6 +151,8 @@ export const useBankBalance = (
         }
         return sum + t.amount;
       }, 0);
+
+    console.log('Johno cash expenses:', johnoCashExpenses);
 
     // Calculate credit card settlements (only if there was a settlement in the selected period)
     let johnoCreditCardSettlement = 0;
@@ -185,6 +197,8 @@ export const useBankBalance = (
     const johnoAdjustedOpening = budgetSetup.zeroBalances ? -johnoIncome + johnoFixedExpenses + johnoCashExpenses + johnoCreditCardSettlement : johnoOpeningBalance;
     const johnoClosingBalance = budgetSetup.zeroBalances ? 0 : johnoCalculatedBalance;
 
+    console.log('Johno balances:', { opening: johnoAdjustedOpening, closing: johnoClosingBalance });
+
     // Calculate for Angela (spouse)
     const angelaTransactions = filteredTransactions.filter(t => 
       t.assignedTo === 'spouse' || (t.assignedTo === 'shared' && t.type === 'expense')
@@ -197,7 +211,6 @@ export const useBankBalance = (
     // Angela's fixed expenses (personal + share of shared)
     const angelaFixedExpenses = budgetSetup.fixedExpenses
      .filter(expense => expense.isActive)
-      .filter(expense => expense.isActive)
       .reduce((sum, expense) => {
         const monthlyAmount = calculateMonthlyAmount(expense.amount, expense.frequency);
         if (expense.assignedTo === 'spouse') {
@@ -238,6 +251,10 @@ export const useBankBalance = (
     const angelaAdjustedOpening = budgetSetup.zeroBalances ? -angelaIncome + angelaFixedExpenses + angelaCashExpenses + angelaCreditCardSettlement : angelaOpeningBalance;
     const angelaClosingBalance = budgetSetup.zeroBalances ? 0 : angelaCalculatedBalance;
 
+    console.log('Angela balances:', { opening: angelaAdjustedOpening, closing: angelaClosingBalance });
+    console.log('Combined closing balance:', johnoClosingBalance + angelaClosingBalance);
+    console.log('=== END BANK BALANCE DEBUG ===');
+
     return {
       johno: {
         openingBalance: johnoAdjustedOpening,
@@ -263,7 +280,7 @@ export const useBankBalance = (
         totalExpenses: johnoFixedExpenses + angelaFixedExpenses + johnoCashExpenses + angelaCashExpenses + johnoCreditCardSettlement + angelaCreditCardSettlement
       }
     };
-  }, [transactions, budgetSetup, dateRange]);
+  }, [transactions, budgetSetup, dateRange?.startDate, dateRange?.endDate]);
 
   return bankBalance;
 };
