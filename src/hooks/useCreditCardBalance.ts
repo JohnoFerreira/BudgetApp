@@ -7,28 +7,42 @@ export const useCreditCardBalance = (
 ): CreditCardBalance => {
   
   const creditCardBalance = useMemo(() => {
-    // Filter transactions since last settlement
-    const settlementDate = lastSettlementDate ? new Date(lastSettlementDate) : new Date('2000-01-01');
+    console.log('=== CREDIT CARD BALANCE DEBUG ===');
+    console.log('Last settlement date:', lastSettlementDate);
+    console.log('Total transactions:', transactions.length);
     
-    console.log('Credit Card Debug:', {
-      lastSettlementDate,
-      settlementDate: settlementDate.toISOString(),
-      totalTransactions: transactions.length
-    });
+    // Filter transactions since last settlement
+    const settlementDate = lastSettlementDate ? new Date(lastSettlementDate) : new Date('1900-01-01');
+    
+    console.log('Settlement date for filtering:', settlementDate.toISOString());
     
     const transactionsSinceSettlement = transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
       const isAfterSettlement = transactionDate > settlementDate;
-      const isCreditCard = transaction.type === 'expense' && 
-             transaction.type === 'expense' && 
-             (transaction.paymentMethod === 'credit_card' || 
-              transaction.account?.toLowerCase().includes('credit') ||
-              transaction.description?.toLowerCase().includes('credit'));
+      
+      // Check if it's a credit card transaction
+      const isCreditCard = transaction.type === 'expense' && (
+        transaction.paymentMethod === 'credit_card' || 
+        transaction.account?.toLowerCase().includes('credit') ||
+        transaction.description?.toLowerCase().includes('credit card') ||
+        transaction.description?.toLowerCase().includes('creditcard')
+      );
+      
+      if (isAfterSettlement && isCreditCard) {
+        console.log('Credit card transaction found:', {
+          date: transaction.date,
+          description: transaction.description,
+          amount: transaction.amount,
+          paymentMethod: transaction.paymentMethod,
+          account: transaction.account
+        });
+      }
       
       return isAfterSettlement && isCreditCard;
     });
     
-    console.log('Transactions since settlement:', transactionsSinceSettlement.length);
+    console.log('Credit card transactions since settlement:', transactionsSinceSettlement.length);
+    console.log('Sample transactions:', transactionsSinceSettlement.slice(0, 3));
 
     // Calculate what each person owes
     let johnoOwes = 0;
@@ -56,6 +70,7 @@ export const useCreditCardBalance = (
       angelaOwes: Math.round(angelaOwes * 100) / 100,
       total: Math.round((johnoOwes + angelaOwes) * 100) / 100
     });
+    console.log('=== END CREDIT CARD DEBUG ===');
 
     return {
       johnoOwes: Math.round(johnoOwes * 100) / 100,

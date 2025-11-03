@@ -110,18 +110,27 @@ function App() {
 
   const handleCreditCardSettlement = () => {
     if (budgetSetup) {
+      console.log('=== SETTLEMENT HANDLER ===');
+      console.log('Current settlement date:', budgetSetup.lastCreditCardSettlement);
+      console.log('Setting new settlement date to:', new Date().toISOString());
+      
       const updatedSetup = {
         ...budgetSetup,
         lastCreditCardSettlement: new Date().toISOString()
       };
+      
+      console.log('Updated setup:', updatedSetup);
+      
       setBudgetSetup(updatedSetup);
       localStorage.setItem('budgetSetup', JSON.stringify(updatedSetup));
       
-      // Force a re-render by updating the state
-      setActiveTab('settlement');
+      console.log('Settlement saved to localStorage');
+      console.log('=== END SETTLEMENT HANDLER ===');
       
       // Show success message
-      alert('Credit card settlement marked as complete!');
+      setTimeout(() => {
+        alert('Credit card settlement marked as complete! Balance should now be zero.');
+      }, 100);
     }
   };
 

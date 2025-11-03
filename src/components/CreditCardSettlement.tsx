@@ -21,10 +21,21 @@ export const CreditCardSettlement: React.FC<CreditCardSettlementProps> = ({
 
   const handleMarkAsSettled = () => {
     const totalAmount = creditCardBalance.totalOutstanding;
-    const confirmMessage = `Mark all credit card expenses as settled?\n\nThis will:\n- Reset the balance to R0.00\n- Set settlement date to today\n- Clear ${creditCardBalance.transactionsSinceSettlement.length} transactions\n\nTotal amount being settled: ${formatCurrency(totalAmount)}`;
+    const transactionCount = creditCardBalance.transactionsSinceSettlement.length;
+    
+    console.log('Settlement confirmation:', {
+      totalAmount,
+      transactionCount,
+      transactions: creditCardBalance.transactionsSinceSettlement
+    });
+    
+    const confirmMessage = `Mark all credit card expenses as settled?\n\nThis will:\n- Reset the balance to R0.00\n- Set settlement date to today (${format(new Date(), 'MMM d, yyyy')})\n- Clear ${transactionCount} credit card transactions\n\nTotal amount being settled: ${formatCurrency(totalAmount)}`;
     
     if (confirm(confirmMessage)) {
+      console.log('User confirmed settlement');
       onSettlement();
+    } else {
+      console.log('User cancelled settlement');
     }
   };
 
