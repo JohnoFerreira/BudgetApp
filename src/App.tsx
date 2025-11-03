@@ -109,29 +109,43 @@ function App() {
   ];
 
   const handleCreditCardSettlement = () => {
+    console.log('=== SETTLEMENT HANDLER ===');
+    console.log('Current budget setup:', !!budgetSetup);
+    
+    const currentDate = new Date().toISOString();
+    console.log('Setting new settlement date to:', currentDate);
+    
     if (budgetSetup) {
-      console.log('=== SETTLEMENT HANDLER ===');
       console.log('Current settlement date:', budgetSetup.lastCreditCardSettlement);
-      console.log('Setting new settlement date to:', new Date().toISOString());
-      
       const updatedSetup = {
         ...budgetSetup,
-        lastCreditCardSettlement: new Date().toISOString()
+        lastCreditCardSettlement: currentDate
       };
-      
-      console.log('Updated setup:', updatedSetup);
-      
       setBudgetSetup(updatedSetup);
       localStorage.setItem('budgetSetup', JSON.stringify(updatedSetup));
-      
-      console.log('Settlement saved to localStorage');
-      console.log('=== END SETTLEMENT HANDLER ===');
-      
-      // Show success message
-      setTimeout(() => {
-        alert('Credit card settlement marked as complete! Balance should now be zero.');
-      }, 100);
+    } else {
+      // Create minimal budget setup for settlement tracking
+      const minimalSetup: BudgetSetupType = {
+        incomeSources: [],
+        fixedExpenses: [],
+        selfName: 'Johno',
+        spouseName: 'Angela',
+        defaultSplitPercentage: 55,
+        lastCreditCardSettlement: currentDate
+      };
+      setBudgetSetup(minimalSetup);
+      localStorage.setItem('budgetSetup', JSON.stringify(minimalSetup));
     }
+    
+    console.log('Settlement saved to localStorage');
+    console.log('=== END SETTLEMENT HANDLER ===');
+    
+    // Show success message with delay to ensure state updates
+    setTimeout(() => {
+      alert('Credit card settlement marked as complete! Balance should now be zero.');
+      // Force a re-render by updating the date range slightly
+      setDateRange(prev => ({ ...prev }));
+    }, 200);
   };
 
   const handleUpdateOpeningBalances = (johnoBalance: number, angelaBalance: number) => {

@@ -11,21 +11,22 @@ export const useCreditCardBalance = (
     console.log('Last settlement date:', lastSettlementDate);
     console.log('Total transactions:', transactions.length);
     
-    // Filter transactions since last settlement
-    const settlementDate = lastSettlementDate ? new Date(lastSettlementDate) : new Date('1900-01-01');
+    // Filter transactions since last settlement - use a more recent default date
+    const settlementDate = lastSettlementDate ? new Date(lastSettlementDate) : new Date('2024-01-01');
     
     console.log('Settlement date for filtering:', settlementDate.toISOString());
     
     const transactionsSinceSettlement = transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
-      const isAfterSettlement = transactionDate > settlementDate;
+      const isAfterSettlement = transactionDate >= settlementDate;
       
       // Check if it's a credit card transaction
       const isCreditCard = transaction.type === 'expense' && (
         transaction.paymentMethod === 'credit_card' || 
         transaction.account?.toLowerCase().includes('credit') ||
-        transaction.description?.toLowerCase().includes('credit card') ||
-        transaction.description?.toLowerCase().includes('creditcard')
+        transaction.description?.toLowerCase().includes('credit') ||
+        transaction.account?.toLowerCase().includes('absa') ||
+        transaction.account?.toLowerCase().includes('card')
       );
       
       if (isAfterSettlement && isCreditCard) {
