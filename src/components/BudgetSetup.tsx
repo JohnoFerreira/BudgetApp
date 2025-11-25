@@ -244,6 +244,261 @@ export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBac
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Budget vs Income Visualization */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg">
+                <PieChart className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">Budget vs Income Analysis</h2>
+            </div>
+            <div className="text-sm text-gray-500">Monthly Overview</div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Visual Chart */}
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Income Allocation</h3>
+                
+                {/* Combined Income Bar */}
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700">Total Monthly Income</span>
+                    <span className="text-lg font-bold text-green-600">{formatCurrency(getTotalIncome())}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                    {(() => {
+                      const totalIncome = getTotalIncome();
+                      const totalFixedExpenses = getTotalExpenses();
+                      const totalBudgetAllocated = getTotalBudgetAllocated();
+                      const totalAllocated = totalFixedExpenses + totalBudgetAllocated;
+                      const remaining = totalIncome - totalAllocated;
+                      
+                      const fixedPercentage = totalIncome > 0 ? (totalFixedExpenses / totalIncome) * 100 : 0;
+                      const budgetPercentage = totalIncome > 0 ? (totalBudgetAllocated / totalIncome) * 100 : 0;
+                      const remainingPercentage = totalIncome > 0 ? (remaining / totalIncome) * 100 : 0;
+                      
+                      return (
+                        <>
+                          <div 
+                            className="bg-red-500 h-4 absolute left-0 top-0"
+                            style={{ width: `${Math.min(fixedPercentage, 100)}%` }}
+                            title={`Fixed Expenses: ${formatCurrency(totalFixedExpenses)}`}
+                          ></div>
+                          <div 
+                            className="bg-blue-500 h-4 absolute top-0"
+                            style={{ 
+                              left: `${Math.min(fixedPercentage, 100)}%`,
+                              width: `${Math.min(budgetPercentage, 100 - fixedPercentage)}%` 
+                            }}
+                            title={`Budget Categories: ${formatCurrency(totalBudgetAllocated)}`}
+                          ></div>
+                          <div 
+                            className={`h-4 absolute top-0 ${remaining >= 0 ? 'bg-green-500' : 'bg-red-600'}`}
+                            style={{ 
+                              left: `${Math.min(fixedPercentage + budgetPercentage, 100)}%`,
+                              width: `${Math.max(0, Math.min(Math.abs(remainingPercentage), 100 - fixedPercentage - budgetPercentage))}%` 
+                            }}
+                            title={`${remaining >= 0 ? 'Available' : 'Over Budget'}: ${formatCurrency(Math.abs(remaining))}`}
+                          ></div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-600 mt-2">
+                    <span className="flex items-center">
+                      <div className="w-3 h-3 bg-red-500 rounded mr-1"></div>
+                      Fixed Expenses
+                    </span>
+                    <span className="flex items-center">
+                      <div className="w-3 h-3 bg-blue-500 rounded mr-1"></div>
+                      Budget Categories
+                    </span>
+                    <span className="flex items-center">
+                      <div className={`w-3 h-3 rounded mr-1 ${getTotalIncome() - getTotalExpenses() - getTotalBudgetAllocated() >= 0 ? 'bg-green-500' : 'bg-red-600'}`}></div>
+                      {getTotalIncome() - getTotalExpenses() - getTotalBudgetAllocated() >= 0 ? 'Available' : 'Over Budget'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Individual Breakdown */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Fixed Expenses</span>
+                      <span className="text-sm font-bold text-red-600">{formatCurrency(getTotalExpenses())}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {getTotalIncome() > 0 ? ((getTotalExpenses() / getTotalIncome()) * 100).toFixed(1) : 0}% of income
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Budget Categories</span>
+                      <span className="text-sm font-bold text-blue-600">{formatCurrency(getTotalBudgetAllocated())}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {getTotalIncome() > 0 ? ((getTotalBudgetAllocated() / getTotalIncome()) * 100).toFixed(1) : 0}% of income
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">
+                        {getTotalIncome() - getTotalExpenses() - getTotalBudgetAllocated() >= 0 ? 'Available' : 'Over Budget'}
+                      </span>
+                      <span className={`text-sm font-bold ${getTotalIncome() - getTotalExpenses() - getTotalBudgetAllocated() >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(Math.abs(getTotalIncome() - getTotalExpenses() - getTotalBudgetAllocated()))}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {getTotalIncome() > 0 ? (Math.abs((getTotalIncome() - getTotalExpenses() - getTotalBudgetAllocated()) / getTotalIncome()) * 100).toFixed(1) : 0}% of income
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Adjustment Tools */}
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Budget Adjustments</h3>
+                
+                {/* Budget Adjustment Presets */}
+                <div className="space-y-4">
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-medium text-gray-900 mb-3">Adjustment Presets</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          const adjustment = 0.9; // 10% reduction
+                          setManualBudgets(budgets => 
+                            budgets.map(budget => ({
+                              ...budget,
+                              allocatedAmount: Math.round(budget.allocatedAmount * adjustment)
+                            }))
+                          );
+                        }}
+                        className="px-3 py-2 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                      >
+                        -10% All Categories
+                      </button>
+                      <button
+                        onClick={() => {
+                          const adjustment = 1.1; // 10% increase
+                          setManualBudgets(budgets => 
+                            budgets.map(budget => ({
+                              ...budget,
+                              allocatedAmount: Math.round(budget.allocatedAmount * adjustment)
+                            }))
+                          );
+                        }}
+                        className="px-3 py-2 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                      >
+                        +10% All Categories
+                      </button>
+                      <button
+                        onClick={() => {
+                          const discretionaryCategories = ['Eating Out', 'Golf', 'Wine', 'Ad Hoc', 'Clothing', 'Travel'];
+                          setManualBudgets(budgets => 
+                            budgets.map(budget => ({
+                              ...budget,
+                              allocatedAmount: discretionaryCategories.includes(budget.category) 
+                                ? Math.round(budget.allocatedAmount * 0.8)
+                                : budget.allocatedAmount
+                            }))
+                          );
+                        }}
+                        className="px-3 py-2 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200 transition-colors"
+                      >
+                        -20% Discretionary
+                      </button>
+                      <button
+                        onClick={() => {
+                          const essentialCategories = ['Groceries', 'Electricity', 'Pet Expenses', 'Kids'];
+                          setManualBudgets(budgets => 
+                            budgets.map(budget => ({
+                              ...budget,
+                              allocatedAmount: essentialCategories.includes(budget.category) 
+                                ? Math.round(budget.allocatedAmount * 1.15)
+                                : budget.allocatedAmount
+                            }))
+                          );
+                        }}
+                        className="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                      >
+                        +15% Essentials
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Balance to Income Button */}
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-medium text-gray-900 mb-2">Auto-Balance</h4>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Automatically adjust all budget categories to fit within available income
+                    </p>
+                    <button
+                      onClick={() => {
+                        const availableForBudgets = getTotalIncome() - getTotalExpenses();
+                        const currentBudgetTotal = getTotalBudgetAllocated();
+                        
+                        if (availableForBudgets > 0 && currentBudgetTotal > 0) {
+                          const scaleFactor = availableForBudgets / currentBudgetTotal;
+                          setManualBudgets(budgets => 
+                            budgets.map(budget => ({
+                              ...budget,
+                              allocatedAmount: Math.round(budget.allocatedAmount * scaleFactor)
+                            }))
+                          );
+                        }
+                      }}
+                      disabled={getTotalIncome() - getTotalExpenses() <= 0}
+                      className="w-full px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Balance to Available Income
+                    </button>
+                  </div>
+
+                  {/* Reset to Defaults */}
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <button
+                      onClick={() => {
+                        if (confirm('Reset all budget categories to default amounts?')) {
+                          setManualBudgets([
+                            { id: '1', category: 'Groceries', allocatedAmount: 12000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '2', category: 'Electricity', allocatedAmount: 2500, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '3', category: 'Hair/Nails/Beauty', allocatedAmount: 2000, assignedTo: 'self', isActive: true },
+                            { id: '4', category: 'Pet Expenses', allocatedAmount: 1500, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '5', category: 'Eating Out', allocatedAmount: 4000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '6', category: 'Clothing', allocatedAmount: 3000, assignedTo: 'shared', splitPercentage: 50, isActive: true },
+                            { id: '7', category: 'Golf', allocatedAmount: 2500, assignedTo: 'self', isActive: true },
+                            { id: '8', category: 'Dischem/Clicks', allocatedAmount: 2000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '9', category: 'Petrol', allocatedAmount: 3500, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '10', category: 'Gifts', allocatedAmount: 1500, assignedTo: 'shared', splitPercentage: 50, isActive: true },
+                            { id: '11', category: 'Travel', allocatedAmount: 5000, assignedTo: 'shared', splitPercentage: 50, isActive: true },
+                            { id: '12', category: 'Wine', allocatedAmount: 2000, assignedTo: 'shared', splitPercentage: 60, isActive: true },
+                            { id: '13', category: 'Kids', allocatedAmount: 8000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '14', category: 'House', allocatedAmount: 4000, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '15', category: 'Subscriptions', allocatedAmount: 1500, assignedTo: 'shared', splitPercentage: 55, isActive: true },
+                            { id: '16', category: 'Ad Hoc', allocatedAmount: 5000, assignedTo: 'self', isActive: true }
+                          ]);
+                        }
+                      }}
+                      className="w-full px-4 py-2 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                    >
+                      Reset to Defaults
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
