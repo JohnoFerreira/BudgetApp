@@ -22,6 +22,7 @@ import { GoogleSheetsSetup } from './components/GoogleSheetsSetup';
 import { BudgetSetupComponent } from './components/BudgetSetup';
 import { SavingsGoalsSetup } from './components/SavingsGoalsSetup';
 import { IndividualOverview } from './components/IndividualOverview';
+import { BudgetVsActuals } from './components/BudgetVsActuals';
 import { useGoogleSheets } from './hooks/useGoogleSheets';
 import { useFinancialData } from './hooks/useFinancialData';
 import { useSmartBudgeting } from './hooks/useSmartBudgeting';
@@ -38,6 +39,7 @@ function App() {
   const [budgetSetup, setBudgetSetup] = useState<BudgetSetupType | null>(null);
   const [useSampleData, setUseSampleData] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances' | 'goals'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances' | 'goals' | 'budget-vs-actuals'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>(() => {
     const saved = localStorage.getItem('savingsGoals');
@@ -100,6 +102,7 @@ function App() {
       { id: 'spouse', label: budgetSetup.spouseName || 'Spouse', icon: User, color: 'text-purple-600' }
     ] : []),
     { id: 'analysis', label: 'Budget Analysis', icon: BarChart3, color: 'text-green-600' },
+    { id: 'budget-vs-actuals', label: 'Budget vs Actuals', icon: PieChart, color: 'text-indigo-600' },
     { id: 'recommendations', label: 'Smart Insights', icon: Brain, color: 'text-purple-600' },
     { id: 'settlement', label: 'Credit Card', icon: CreditCard, color: 'text-red-600' },
     { id: 'balances', label: 'Bank Balances', icon: Wallet, color: 'text-emerald-600' },
@@ -438,6 +441,33 @@ function App() {
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
           />
+        )}
+
+        {activeTab === 'budget-vs-actuals' && budgetSetup && (
+          <BudgetVsActuals
+            budgets={budgets}
+            budgetSetup={budgetSetup}
+            transactions={filteredTransactions}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
+        )}
+
+        {activeTab === 'budget-vs-actuals' && !budgetSetup && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <PieChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Budget Setup Required</h2>
+            <p className="text-gray-600 mb-4">
+              You need to complete your budget setup before viewing budget vs actuals.
+            </p>
+            <button
+              onClick={() => setActiveTab('setup')}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Go to Budget Setup
+            </button>
+          </div>
         )}
 
         {activeTab === 'recommendations' && (
