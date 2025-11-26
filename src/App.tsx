@@ -518,6 +518,7 @@ function App() {
             onSave={handleBudgetSetupSave}
             onBack={() => setActiveTab('dashboard')}
             initialSetup={budgetSetup || undefined}
+            transactions={activeTransactions}
           />
         )}
 
