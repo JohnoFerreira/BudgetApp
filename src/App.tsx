@@ -38,7 +38,6 @@ function App() {
   const [config, setConfig] = useState<GoogleSheetsConfig | null>(null);
   const [budgetSetup, setBudgetSetup] = useState<BudgetSetupType | null>(null);
   const [useSampleData, setUseSampleData] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances' | 'goals'>('dashboard');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances' | 'goals' | 'budget-vs-actuals'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>(() => {
