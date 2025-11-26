@@ -6,14 +6,12 @@ interface BudgetSetupProps {
   onSave: (setup: BudgetSetup) => void;
   onBack: () => void;
   initialSetup?: BudgetSetup;
-  transactions?: any[];
 }
 
 export const BudgetSetupComponent: React.FC<BudgetSetupProps> = ({ onSave, onBack, initialSetup }) => {
   const [selfName, setSelfName] = useState(initialSetup?.selfName || '');
   const [spouseName, setSpouseName] = useState(initialSetup?.spouseName || '');
-  initialSetup,
-  transactions = []
+  const [defaultSplitPercentage, setDefaultSplitPercentage] = useState(initialSetup?.defaultSplitPercentage || 55);
   const [activeTab, setActiveTab] = useState<'income' | 'expenses' | 'budgets' | 'settings'>('income');
   
   const [incomeSources, setIncomeSources] = useState<IncomeSource[]>(
