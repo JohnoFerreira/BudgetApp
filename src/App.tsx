@@ -33,12 +33,13 @@ import { BankBalanceOverview } from './components/BankBalanceOverview';
 import { generateSampleData, generateSampleSavingsGoals } from './utils/sampleData';
 import { GoogleSheetsConfig, SavingsGoal, BudgetSetup as BudgetSetupType } from './types';
 import { DateRange, getDefaultDateRange } from './components/DateRangeFilter';
+import { AIBudgetRecommendations } from './components/AIBudgetRecommendations';
 
 function App() {
   const [config, setConfig] = useState<GoogleSheetsConfig | null>(null);
   const [budgetSetup, setBudgetSetup] = useState<BudgetSetupType | null>(null);
   const [useSampleData, setUseSampleData] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances' | 'goals' | 'budget-vs-actuals'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis' | 'recommendations' | 'setup' | 'self' | 'spouse' | 'settlement' | 'balances' | 'goals' | 'budget-vs-actuals' | 'ai-recommendations'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>(() => {
     const saved = localStorage.getItem('savingsGoals');
@@ -106,6 +107,7 @@ function App() {
     { id: 'settlement', label: 'Credit Card', icon: CreditCard, color: 'text-red-600' },
     { id: 'balances', label: 'Bank Balances', icon: Wallet, color: 'text-emerald-600' },
     { id: 'goals', label: 'Savings Goals', icon: Target, color: 'text-orange-600' },
+    { id: 'ai-recommendations', label: 'AI Recommendations', icon: Brain, color: 'text-purple-600' },
     { id: 'setup', label: 'Budget Setup', icon: Settings, color: 'text-gray-600' },
     { id: 'api-update', label: 'Update API', icon: RefreshCw, color: 'text-indigo-600' }
   ];
@@ -528,6 +530,24 @@ function App() {
             onSave={handleSavingsGoalsSave}
             onBack={() => setActiveTab('dashboard')}
             budgetSetup={budgetSetup}
+          />
+        )}
+
+        {activeTab === 'ai-recommendations' && (
+          <AIBudgetRecommendations
+            transactions={activeTransactions}
+            budgetSetup={budgetSetup}
+            onUpdateBudgets={(budgets) => {
+              if (budgetSetup) {
+                const updatedSetup = {
+                  ...budgetSetup,
+                  manualBudgets: budgets
+                };
+                setBudgetSetup(updatedSetup);
+                localStorage.setItem('budgetSetup', JSON.stringify(updatedSetup));
+              }
+            }}
+            onBack={() => setActiveTab('dashboard')}
           />
         )}
       </div>
