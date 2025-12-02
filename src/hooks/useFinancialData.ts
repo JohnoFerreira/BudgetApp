@@ -146,7 +146,39 @@ export const useFinancialData = (
           const spent = filteredTransactions
             .filter(t => t.category === manualBudget.category && t.type === 'expense')
             .reduce((sum, t) => {
-              // Calculate the actual amount for this person based on assignment and split
+              // Calculate the actual amount based on budget assignment and transaction assignment
+              if (manualBudget.assignedTo === 'self') {
+                // Only count transactions assigned to self or self's share of shared transactions
+                if (t.assignedTo === 'self') {
+                  return sum + t.amount;
+                } else if (t.assignedTo === 'shared' && t.splitPercentage) {
+                  return sum + (t.amount * (t.splitPercentage / 100));
+                } else if (t.assignedTo === 'shared') {
+                  const defaultSplit = budgetSetup?.defaultSplitPercentage || 55;
+                  return sum + (t.amount * (defaultSplit / 100));
+                }
+              } else if (manualBudget.assignedTo === 'spouse') {
+                // Only count transactions assigned to spouse or spouse's share of shared transactions
+                if (t.assignedTo === 'spouse') {
+                  return sum + t.amount;
+                } else if (t.assignedTo === 'shared' && t.splitPercentage) {
+                  const spouseShare = 100 - t.splitPercentage;
+                  return sum + (t.amount * (spouseShare / 100));
+                } else if (t.assignedTo === 'shared') {
+                  const defaultSplit = budgetSetup?.defaultSplitPercentage || 55;
+                  const spouseShare = 100 - defaultSplit;
+                  return sum + (t.amount * (spouseShare / 100));
+                }
+              } else {
+                // Shared budget - count all transactions (personal + shared)
+                if (t.assignedTo === 'self' || t.assignedTo === 'spouse') {
+                  return sum + t.amount;
+                } else if (t.assignedTo === 'shared') {
+                  return sum + t.amount;
+                }
+              }
+              return sum;
+            }, 0);
               if (t.assignedTo === 'shared' && t.splitPercentage) {
                 return sum + (t.amount * (t.splitPercentage / 100));
               } else if (t.assignedTo === 'shared') {
@@ -174,12 +206,11 @@ export const useFinancialData = (
       const spent = filteredTransactions
         .filter(t => t.category === category && t.type === 'expense')
         .reduce((sum, t) => {
-          // Calculate the actual amount for this person based on assignment and split
+          // For default budgets, calculate total spending (both parties)
           if (t.assignedTo === 'shared' && t.splitPercentage) {
-            return sum + (t.amount * (t.splitPercentage / 100));
+            return sum + t.amount; // Count full amount for shared expenses in default budgets
           } else if (t.assignedTo === 'shared') {
-            const defaultSplit = budgetSetup?.defaultSplitPercentage || 55;
-            return sum + (t.amount * (defaultSplit / 100));
+            return sum + t.amount; // Count full amount for shared expenses in default budgets
           }
           return sum + t.amount;
         }, 0);
