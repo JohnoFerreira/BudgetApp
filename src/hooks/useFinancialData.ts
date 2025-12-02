@@ -89,7 +89,7 @@ export const useFinancialData = (
     });
     
     return averages;
-  }, [transactions]);
+  }, [transactions, budgetSetup]);
 
   const summary: FinancialSummary = useMemo(() => {
     const totalIncome = filteredTransactions
@@ -178,13 +178,6 @@ export const useFinancialData = (
                 }
               }
               return sum;
-            }, 0);
-              if (t.assignedTo === 'shared' && t.splitPercentage) {
-                return sum + (t.amount * (t.splitPercentage / 100));
-              } else if (t.assignedTo === 'shared') {
-                return sum + (t.amount * 0.5); // Default 50/50 split
-              }
-              return sum + t.amount;
             }, 0);
 
           return {
